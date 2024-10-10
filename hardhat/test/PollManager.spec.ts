@@ -1,14 +1,7 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-import {
-  AbiCoder,
-  decodeRlp,
-  encodeRlp,
-  getBytes,
-  hexlify,
-  parseEther,
-} from 'ethers';
+import { AbiCoder, decodeRlp, encodeRlp, getBytes, hexlify, parseEther } from 'ethers';
 
 import {
   PollManager,
@@ -24,7 +17,6 @@ import {
 
 import { BLOCK_HEADERS, WMATIC_BALANCE } from './exampleproofs';
 import { addProposal, deployContract, deployStorageProofStuff } from './common';
-
 
 describe('PollManager', function () {
   let acl_tokenholder: TokenHolderACL;
@@ -43,7 +35,7 @@ describe('PollManager', function () {
     acl_tokenholder = (await deployContract('TokenHolderACL')) as TokenHolderACL;
     gv = await deployContract('GaslessVoting');
 
-    ({accountCache, acl_storageproof, headerCache} = await deployStorageProofStuff());
+    ({ accountCache, acl_storageproof, headerCache } = await deployStorageProofStuff());
 
     const acl_allowall_addr = await acl_allowall.getAddress();
     pm = (await deployContract(
@@ -56,14 +48,14 @@ describe('PollManager', function () {
       {
         flags: 1n,
         numChoices: 4n,
-        closeTimestamp: BigInt(Math.round(new Date().getTime()/1000) + 1),
+        closeTimestamp: BigInt(Math.round(new Date().getTime() / 1000) + 1),
         acl: acl_allowall_addr,
         metadata: new Uint8Array(),
       },
       {
         flags: 1n,
         numChoices: 3n,
-        closeTimestamp: BigInt(Math.round(new Date().getTime()/1000) + 2),
+        closeTimestamp: BigInt(Math.round(new Date().getTime() / 1000) + 2),
         acl: acl_allowall_addr,
         metadata: new Uint8Array(),
       },
