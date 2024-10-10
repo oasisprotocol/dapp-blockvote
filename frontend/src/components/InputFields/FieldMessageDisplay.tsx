@@ -1,29 +1,31 @@
 import { FC, ForwardedRef, forwardRef } from 'react'
-import { Problem, ProblemLevel } from './util'
+import { FieldMessage, FieldMessageType } from './util'
 import classes from './index.module.css'
 import { AnimatePresence } from 'framer-motion'
 import { MotionDiv } from '../Animations'
+import { MarkdownBlock } from '../Markdown'
 
-const problemClass: Record<ProblemLevel, string> = {
+const messageClass: Record<FieldMessageType, string> = {
   error: classes.fieldError,
   warning: classes.fieldWarning,
+  info: classes.fieldInfo,
 }
 
 type Remover = (id: string) => void
 
-export const ProblemDisplay: FC<{
-  problem: Problem
+export const FieldMessageDisplay: FC<{
+  message: FieldMessage
   onRemove: Remover
-}> = forwardRef(({ problem, onRemove }, ref: ForwardedRef<HTMLDivElement>) => {
-  // console.log('Displaying problem', problem)
+}> = forwardRef(({ message, onRemove }, ref: ForwardedRef<HTMLDivElement>) => {
+  // console.log('Displaying message', message)
   return (
     <MotionDiv
       reason={'fieldValidationErrors'}
       ref={ref}
-      key={problem.signature || problem.message}
+      key={message.signature || (message.text as string)}
       // layout
-      className={problemClass[problem.level ?? 'error']}
-      onClick={() => onRemove(problem.message)}
+      className={messageClass[message.type ?? 'error']}
+      onClick={() => onRemove(message.text as string)}
       // initial={{ opacity: 0, y: '-50%' }}
       // animate={{ opacity: 1, x: 0, y: 0 }}
       // exit={{ opacity: 0, x: '+10%' }}
@@ -32,18 +34,18 @@ export const ProblemDisplay: FC<{
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
     >
-      {problem.message}
+      <MarkdownBlock code={message.text} mainTag={'span'} />
     </MotionDiv>
   )
 })
 
-export const ProblemList: FC<{
-  problems: Problem[] | undefined
+export const FieldMessageList: FC<{
+  messages: FieldMessage[] | undefined
   onRemove: Remover
-}> = ({ problems = [], onRemove }) => (
+}> = ({ messages = [], onRemove }) => (
   <AnimatePresence mode={'wait'} initial={false}>
-    {problems.map(p => (
-      <ProblemDisplay key={p.signature ?? p.message} problem={p} onRemove={onRemove} />
+    {messages.map(p => (
+      <FieldMessageDisplay key={p.signature ?? (p.text as string)} message={p} onRemove={onRemove} />
     ))}
   </AnimatePresence>
 )

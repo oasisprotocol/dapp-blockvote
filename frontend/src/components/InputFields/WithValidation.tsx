@@ -2,8 +2,8 @@ import { FC, PropsWithChildren, ReactNode } from 'react'
 import { StringUtils } from '../../utils/string.utils'
 import classes from './index.module.css'
 import { InputFieldControls } from './useInputField'
-import { checkProblems, Problem } from './util'
-import { ProblemAndValidationMessage } from './ProblemAndValidationMessage'
+import { checkMessagesForProblems, FieldMessage } from './util'
+import { FieldAndValidationMessage } from './FieldAndValidationMessage'
 import { FieldStatusIndicators } from './FieldStatusIndicator'
 
 export const WithValidation: FC<
@@ -15,17 +15,17 @@ export const WithValidation: FC<
       | 'validationPending'
       | 'isValidated'
       | 'validationStatusMessage'
-      | 'clearProblem'
+      | 'clearMessage'
       | 'compact'
       | 'label'
     >
     fieldClasses?: string[]
-    problems: Problem[] | undefined
+    messages: FieldMessage[] | undefined
     extraWidget?: ReactNode | undefined
   }>
 > = props => {
-  const { field, fieldClasses = [], problems = [], children, extraWidget } = props
-  const { hasWarning, hasError } = checkProblems(problems)
+  const { field, fieldClasses = [], messages = [], children, extraWidget } = props
+  const { hasWarning, hasError } = checkMessagesForProblems(messages)
   const { compact, label } = field
   return (
     <div
@@ -38,10 +38,10 @@ export const WithValidation: FC<
       <div key="field-and-status" className="niceLine">
         {compact && <div className={classes.fieldLabel}>{label}</div>}
         {children}
-        <FieldStatusIndicators key={'status'} {...field} problems={problems} />
+        <FieldStatusIndicators key={'status'} {...field} messages={messages} />
         {extraWidget}
       </div>
-      <ProblemAndValidationMessage key="problems-and-status" problems={problems} {...field} />
+      <FieldAndValidationMessage key="problems-and-status" messages={messages} {...field} />
     </div>
   )
 }

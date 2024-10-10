@@ -8,7 +8,7 @@ import { WithValidation } from './WithValidation'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
 
 export const BooleanInput: FC<BooleanFieldControls> = props => {
-  const { name, description, label, value, setValue, allProblems, enabled, whyDisabled } = props
+  const { name, description, label, value, setValue, allMessages, enabled, whyDisabled } = props
 
   // Clicking on the checkbox itself
   const handleChange = useCallback(
@@ -24,7 +24,7 @@ export const BooleanInput: FC<BooleanFieldControls> = props => {
 
   return (
     <WithVisibility field={props}>
-      <WithValidation field={props} problems={allProblems.root}>
+      <WithValidation field={props} messages={allMessages.root}>
         <MaybeWithTooltip overlay={whyDisabled ?? description}>
           <div
             className={StringUtils.clsx('niceLine', enabled ? classes.pointer : classes.disabled)}

@@ -7,7 +7,7 @@ import { WithValidation } from './WithValidation'
 import classes from './index.module.css'
 
 export const SelectInput: FC<OneOfFieldControls<any>> = props => {
-  const { choices, allProblems, value, setValue, enabled } = props
+  const { choices, allMessages, value, setValue, enabled } = props
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => setValue(e.target.value),
@@ -17,7 +17,7 @@ export const SelectInput: FC<OneOfFieldControls<any>> = props => {
   return (
     <WithVisibility field={props}>
       <WithLabelAndDescription field={props}>
-        <WithValidation field={props} problems={allProblems.root} fieldClasses={[classes.selectValue]}>
+        <WithValidation field={props} messages={allMessages.root} fieldClasses={[classes.selectValue]}>
           <select value={value} onChange={handleChange} disabled={!enabled}>
             {choices
               .filter(c => !c.hidden)

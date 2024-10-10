@@ -10,8 +10,8 @@ import {
   findDuplicates,
   SingleOrArray,
   ValidatorFunction,
-  wrapProblem,
-  ProblemAtLocation,
+  wrapValidatorOutput,
+  MessageAtLocation,
   flatten,
 } from './util'
 import { useState } from 'react'
@@ -222,8 +222,8 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
           setPendingValidationIndex(index)
           controls.updateStatus({ message: undefined })
           const reports = getAsArray(await itemValidator(value, controls, reason))
-            .map(rep => wrapProblem(rep, `value-${index}`, 'error'))
-            .filter((p): p is ProblemAtLocation => !!p)
+            .map(rep => wrapValidatorOutput(rep, `value-${index}`, 'error'))
+            .filter((p): p is MessageAtLocation => !!p)
           setPendingValidationIndex(undefined)
           return reports
         },
@@ -246,12 +246,12 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
           : (values, _control, reason) =>
               reason === 'change'
                 ? []
-                : values.map((value, index): ProblemAtLocation | undefined =>
+                : values.map((value, index): MessageAtLocation | undefined =>
                     value
                       ? undefined
                       : {
                           signature: 'empty:',
-                          message: emptyItemMessage,
+                          text: emptyItemMessage,
                           location: `value-${index}`,
                         },
                   ),
@@ -279,11 +279,11 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
         // Check minimum length on all items
         minLength
           ? values =>
-              values.map((value, index): ProblemAtLocation | undefined =>
+              values.map((value, index): MessageAtLocation | undefined =>
                 !!value && value.length < minLength
                   ? {
                       signature: 'tooShort',
-                      message: `${getNumberMessage(tooShortItemMessage, minLength)} (Currently: ${value.length})`,
+                      text: `${getNumberMessage(tooShortItemMessage, minLength)} (Currently: ${value.length})`,
                       location: `value-${index}`,
                     }
                   : undefined,
@@ -293,11 +293,11 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
         // Check maximum length on all items
         maxLength
           ? values =>
-              values.map((value, index): ProblemAtLocation | undefined =>
+              values.map((value, index): MessageAtLocation | undefined =>
                 !!value && value.length > maxLength
                   ? {
                       signature: 'tooLong',
-                      message: `${getNumberMessage(tooLongItemMessage, maxLength)} (Currently: ${value.length})`,
+                      text: `${getNumberMessage(tooLongItemMessage, maxLength)} (Currently: ${value.length})`,
                       location: `value-${index}`,
                     }
                   : undefined,
@@ -311,11 +311,11 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
               findDuplicates(values).flatMap((list, listIndex) => {
                 const realList = list.filter(index => !!values[index])
                 return realList.map(
-                  (index): ProblemAtLocation => ({
+                  (index): MessageAtLocation => ({
                     signature: 'duplicate',
-                    message: duplicatesErrorMessages[listIndex],
+                    text: duplicatesErrorMessages[listIndex],
                     location: `value-${index}`,
-                    level: (['warning', 'error'] as const)[listIndex],
+                    type: (['warning', 'error'] as const)[listIndex],
                   }),
                 )
               }),
@@ -369,7 +369,7 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
   }
 
   newControls.setItem = (index, value) => {
-    // controls.clearProblemsAt(`value-${index}`)
+    // controls.clearMessagesAt(`value-${index}`)
     controls.setValue(controls.value.map((oldValue, oldIndex) => (oldIndex === index ? value : oldValue)))
     if (onItemEdited) {
       onItemEdited(index, value, newControls)

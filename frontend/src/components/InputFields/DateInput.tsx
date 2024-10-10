@@ -18,7 +18,7 @@ const convertToDateTimeLocalString = (date: Date) => {
 }
 
 export const DateInput: FC<DateFieldControls> = props => {
-  const { name, value, placeholder, setValue, allProblems, enabled, whyDisabled } = props
+  const { name, value, placeholder, setValue, allMessages, enabled, whyDisabled } = props
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => setValue(new Date(event.target.value)),
     [setValue],
@@ -27,7 +27,7 @@ export const DateInput: FC<DateFieldControls> = props => {
   return (
     <WithVisibility field={props}>
       <WithLabelAndDescription field={props}>
-        <WithValidation field={props} problems={allProblems.root}>
+        <WithValidation field={props} messages={allMessages.root}>
           <MaybeWithTooltip overlay={whyDisabled}>
             <input
               name={name}
