@@ -3,25 +3,12 @@ import { ethers } from 'hardhat';
 
 import {
   AbiCoder,
-  BytesLike,
-  EventLog,
-  JsonRpcProvider,
   decodeRlp,
   encodeRlp,
   getBytes,
   hexlify,
   parseEther,
 } from 'ethers';
-
-import {
-  signVotingRequest,
-  getHolderBalance,
-  fetchStorageProof,
-  RequestType,
-  getBlockHeaderRLP,
-  fetchAccountProof,
-  guessStorageSlot,
-} from '@oasisprotocol/blockvote-contracts';
 
 import {
   PollManager,
@@ -36,82 +23,27 @@ import {
 } from '../src/contracts';
 
 import { BLOCK_HEADERS, WMATIC_BALANCE } from './exampleproofs';
+import { addProposal, deployContract, deployStorageProofStuff } from './common';
 
-async function addProposal(
-  dao: PollManager,
-  proposal: PollManager.ProposalParamsStruct,
-  aclData?: Uint8Array,
-  value?: bigint,
-) {
-  if (!value) {
-    value = 0n;
-  }
-  const tx = await dao.create(proposal, aclData ?? new Uint8Array([]), { value });
-  const receipt = await tx.wait();
-  expect(receipt!.logs).to.not.be.undefined;
-  const createEvent = receipt!.logs.find(
-    (event) => (event as EventLog).fragment.name === 'ProposalCreated',
-  ) as EventLog;
-  expect(createEvent).to.not.be.undefined;
-  expect(createEvent!.args).to.not.be.undefined;
-  return createEvent!.args![0] as BytesLike;
-}
-
-async function closeProposal(dao: PollManager, proposalId: BytesLike) {
-  const tx = await dao.close(proposalId);
-  const receipt = await tx.wait();
-  expect(receipt!.logs).to.not.be.undefined;
-  const closeEvent = receipt!.logs.find(
-    (event) => (event as EventLog).fragment.name === 'ProposalClosed',
-  ) as EventLog | undefined;
-  expect(closeEvent).to.not.be.undefined;
-  expect(closeEvent!.args).to.not.be.undefined;
-  const [_, topChoice] = closeEvent!.args;
-  return topChoice as bigint;
-}
-
-async function deployContract(name: string, ...args: any[]) {
-  const c = await (await ethers.getContractFactory(name)).deploy(...args);
-  await c.waitForDeployment();
-  console.log('  -', name, await c.getAddress());
-  return c;
-}
 
 describe('PollManager', function () {
   let acl_tokenholder: TokenHolderACL;
   let acl_allowall: AllowAllACL;
   let acl_voterlist: VoterAllowListACL;
   let acl_storageproof: StorageProofACL;
-  let storageProof: StorageProof;
   let accountCache: AccountCache;
   let headerCache: HeaderCache;
   let pm: PollManager;
   let gv: GaslessVoting;
   let TEST_PROPOSALS: PollManager.ProposalParamsStruct[];
 
-  async function deployStorageProofStuff() {
-    headerCache = (await deployContract('HeaderCache')) as HeaderCache;
-    accountCache = (await deployContract(
-      'AccountCache',
-      await headerCache.getAddress(),
-    )) as AccountCache;
-    storageProof = (await deployContract(
-      'StorageProof',
-      await accountCache.getAddress(),
-    )) as StorageProof;
-    acl_storageproof = (await deployContract(
-      'StorageProofACL',
-      await storageProof.getAddress(),
-    )) as StorageProofACL;
-  }
-
   before(async () => {
     acl_allowall = (await deployContract('AllowAllACL')) as AllowAllACL;
     acl_voterlist = (await deployContract('VoterAllowListACL')) as VoterAllowListACL;
     acl_tokenholder = (await deployContract('TokenHolderACL')) as TokenHolderACL;
-    gv = (await deployContract('GaslessVoting')) as GaslessVoting;
+    gv = await deployContract('GaslessVoting');
 
-    await deployStorageProofStuff();
+    ({accountCache, acl_storageproof, headerCache} = await deployStorageProofStuff());
 
     const acl_allowall_addr = await acl_allowall.getAddress();
     pm = (await deployContract(
@@ -289,170 +221,5 @@ describe('PollManager', function () {
 
     const tx2 = await accountCache.add(blockHash, accountAddress, accountRlpProof);
     await tx2.wait();
-  });
-
-  it('Test Gasless Voting', async function () {
-    // This test requires RNG and runs on the Sapphire network only.
-    // You can set up sapphire-dev image and run the test like this:
-    // docker run -it -p8545:8545 -p8546:8546 ghcr.io/oasisprotocol/sapphire-dev -to 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-    // npx hardhat test --grep proxy --network sapphire-localnet
-    if ((await ethers.provider.getNetwork()).chainId == 1337n) {
-      this.skip();
-    }
-    const signer = await ethers.provider.getSigner(0);
-
-    const aclParams = new Uint8Array([]);
-
-    const proposalId = await addProposal(
-      pm,
-      {
-        flags: 0,
-        metadata: new Uint8Array(),
-        numChoices: 3n,
-        closeTimestamp: 0n,
-        acl: await acl_allowall.getAddress(),
-      },
-      aclParams,
-      parseEther('1'),
-    );
-
-    const gvAddresses = await gv.listAddresses(await pm.getAddress(), proposalId);
-    expect(gvAddresses.out_addrs.length).gt(0);
-    expect(gvAddresses.out_balances.length).eq(gvAddresses.out_addrs.length);
-    expect(gvAddresses.out_balances[0]).eq(parseEther('1'));
-
-    const gvAddr = gvAddresses.out_addrs[0];
-    const gvNonce = await ethers.provider.getTransactionCount(gvAddr);
-
-    const feeData = await ethers.provider.getFeeData();
-
-    const request = {
-      dao: await pm.getAddress(),
-      voter: await signer.getAddress(),
-      proposalId: proposalId,
-      choiceId: 1,
-    } as RequestType;
-    const rsv = await signVotingRequest(await gv.getAddress(), ethers.provider, signer, request);
-
-    const gvTx = await gv.makeVoteTransaction(
-      gvAddr,
-      gvNonce,
-      feeData.gasPrice!,
-      request,
-      new Uint8Array([]),
-      rsv,
-    );
-    const gvResponse = await ethers.provider.broadcastTransaction(gvTx);
-    const gvReceipt = await gvResponse.wait();
-    expect(gvReceipt?.status).eq(1);
-  });
-
-  it('Gasless Voting with Storage Proof', async function () {
-    if ((await ethers.provider.getNetwork()).chainId == 1337n) {
-      this.skip();
-    }
-
-    const mumbai = new JsonRpcProvider(
-      'https://polygon-mumbai.g.alchemy.com/v2/g4qVlKDewH8F19bv47GB1Iq3Ca_XxWhN',
-    );
-    const mumbai_height = await mumbai.getBlockNumber();
-    const mumbah_block = await mumbai.getBlock(mumbai_height);
-    const mumbai_hash = mumbah_block!.hash!;
-
-    const signer = await ethers.provider.getSigner(0);
-    const signerAddress = await signer.getAddress();
-
-    const tokenAddress = '0x00027bc3c5490737b3112526efef90abf921d3d4';
-    //console.log('Token', tokenAddress);
-    //console.log('Signer', signerAddress);
-
-    const holderBalance = await getHolderBalance(tokenAddress, signerAddress, mumbai);
-    //console.log('Holder balance is', holderBalance);
-
-    const storageMapInfo = await guessStorageSlot(
-      mumbai,
-      tokenAddress,
-      'ERC-20',
-      signerAddress,
-      mumbai_hash,
-    );
-    if (!storageMapInfo) {
-      throw new Error("Couldn't find storage map!");
-    }
-    //console.log('Token Balance Slot', storageMapInfo);
-
-    const headerRlpBytes = await getBlockHeaderRLP(mumbai, mumbai_hash);
-    const rlpAccountProof = await fetchAccountProof(mumbai, mumbai_hash, tokenAddress);
-
-    const abi = AbiCoder.defaultAbiCoder();
-    const aclParams = getBytes(
-      abi.encode(
-        ['tuple(tuple(bytes32,address,uint256),bytes,bytes)'],
-        [
-          [
-            // PollCreationOptions
-            [
-              // PollSettings
-              mumbai_hash,
-              tokenAddress,
-              storageMapInfo.index,
-            ],
-            headerRlpBytes,
-            rlpAccountProof,
-          ],
-        ],
-      ),
-    );
-
-    const proposalId = await addProposal(
-      pm,
-      {
-        flags: 0,
-        metadata: new Uint8Array(),
-        numChoices: 3n,
-        closeTimestamp: 0n,
-        acl: await acl_storageproof.getAddress(),
-      },
-      aclParams,
-      parseEther('1'),
-    );
-
-    const gvAddresses = await gv.listAddresses(await pm.getAddress(), proposalId);
-    expect(gvAddresses.out_addrs.length).gt(0);
-    expect(gvAddresses.out_balances.length).eq(gvAddresses.out_addrs.length);
-    expect(gvAddresses.out_balances[0]).eq(parseEther('1'));
-
-    const gvAddr = gvAddresses.out_addrs[0];
-    const gvNonce = await ethers.provider.getTransactionCount(gvAddr);
-    const feeData = await ethers.provider.getFeeData();
-
-    const request = {
-      dao: await pm.getAddress(),
-      voter: await signer.getAddress(),
-      proposalId: proposalId,
-      choiceId: 1,
-    };
-    const rsv = await signVotingRequest(await gv.getAddress(), ethers.provider, signer, request);
-
-    const storageProof = await fetchStorageProof(
-      mumbai,
-      mumbai_hash,
-      tokenAddress,
-      101,
-      signerAddress,
-    );
-    //console.log('Storage proof is', storageProof);
-    const gvTx = await gv.makeVoteTransaction(
-      gvAddr,
-      gvNonce,
-      feeData.gasPrice!,
-      request,
-      storageProof,
-      rsv,
-    );
-
-    const gvResponse = await ethers.provider.broadcastTransaction(gvTx);
-    const gvReceipt = await gvResponse.wait();
-    expect(gvReceipt?.status).eq(1);
   });
 });

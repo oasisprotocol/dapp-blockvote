@@ -21,12 +21,12 @@ const router = createHashRouter([
         element: <DashboardPage />,
       },
       {
-        path: 'polls/:pollId',
-        element: <PollPage />,
-      },
-      {
         path: 'create',
         element: <CreatePollPage />,
+      },
+      {
+        path: ':pollId',
+        element: <PollPage />,
       },
     ],
   },

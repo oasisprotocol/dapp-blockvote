@@ -8,6 +8,7 @@ import { ActivePoll } from './ActivePoll'
 import { ThanksForVote } from './ThanksForVoting'
 import { Helmet } from 'react-helmet-async'
 import { appName, appNameAndTagline, appRootUrl } from '../../constants/config'
+import { slugToProposalId } from '../../utils/slug'
 
 const PollLoading: FC = () => {
   return (
@@ -82,8 +83,8 @@ export const PollUI: FC<PollData> = props => {
 }
 
 export const PollPage: FC = () => {
-  const { pollId } = useParams()
-  const pollData = usePollData(pollId!)
+  const { pollId: slug } = useParams()
+  const pollData = usePollData(slugToProposalId(slug!))
   const { poll } = pollData
   const params = poll?.ipfsParams
   if (params) {
@@ -95,7 +96,7 @@ export const PollPage: FC = () => {
           <title>{title}</title>
           <meta name="twitter:title" content={title} />
           <meta property="og:title" content={title} />,
-          <meta property="og:url" content={`${appRootUrl}/#polls/${pollId}`} />
+          <meta property="og:url" content={`${appRootUrl}/#${slug}`} />
           {description && (
             <>
               <meta name="twitter:description" content={description} />

@@ -13,14 +13,19 @@ import { IGaslessVoter } from "../interfaces/IGaslessVoter.sol";
 contract PollManager is IERC165, IPollManager {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    uint256 public constant MAX_CHOICES = 8;
+    // Truncate proposal IDs to the first 8 bytes, to provide short URLs
+    uint internal constant PROPOSAL_ID_N_BYTES = 8;
+    uint internal constant PROPOSAL_ID_N_BITS = 8*PROPOSAL_ID_N_BYTES;
+    uint internal constant PROPOSAL_ID_MASK = ((1<<(PROPOSAL_ID_N_BITS))-1)<<(256-PROPOSAL_ID_N_BITS);
 
-    uint8 constant FLAG_ACTIVE = 1<<0;
-    uint8 constant FLAG_PUBLISH_VOTERS = 1<<1;
-    uint8 constant FLAG_PUBLISH_VOTES = 1<<2;
-    uint8 constant FLAG_HIDDEN = 1<<3;
-    uint8 constant FLAG_WEIGHT_LOG10 = 1<<4;
-    uint8 constant FLAG_WEIGHT_ONE = 1<<5;
+    uint256 internal constant MAX_CHOICES = 8;
+
+    uint8 internal constant FLAG_ACTIVE = 1<<0;
+    uint8 internal constant FLAG_PUBLISH_VOTERS = 1<<1;
+    uint8 internal constant FLAG_PUBLISH_VOTES = 1<<2;
+    uint8 internal constant FLAG_HIDDEN = 1<<3;
+    uint8 internal constant FLAG_WEIGHT_LOG10 = 1<<4;
+    uint8 internal constant FLAG_WEIGHT_ONE = 1<<5;
 
     // ------------------------------------------------------------------------
     // ERRORS
@@ -55,6 +60,8 @@ contract PollManager is IERC165, IPollManager {
 
     // ------------------------------------------------------------------------
     // EVENTS
+
+    // Events are only emitted if the proposal wasn't hidden
 
     event ProposalCreated(bytes32 id);
 
@@ -111,8 +118,6 @@ contract PollManager is IERC165, IPollManager {
 
     mapping(bytes32 => uint256) private s_pastProposalsIndex;
 
-    mapping(bytes32 => address) private OWNERS;
-
     mapping(bytes32 => Proposal) private PROPOSALS;
 
     EnumerableSet.Bytes32Set private ACTIVE_PROPOSALS;
@@ -124,6 +129,8 @@ contract PollManager is IERC165, IPollManager {
     // PUBLIC STORAGE
 
     IGaslessVoter public immutable GASLESS_VOTER;
+
+    mapping(bytes32 => address) public OWNERS;
 
 
     // ------------------------------------------------------------------------
@@ -185,7 +192,8 @@ contract PollManager is IERC165, IPollManager {
             revert Create_InvalidACL();
         }
 
-        if (in_params.numChoices == 0) {
+        // Must be at least 2 options
+        if (in_params.numChoices < 2) {
             revert Create_NoChoices();
         }
 
@@ -195,6 +203,7 @@ contract PollManager is IERC165, IPollManager {
 
         bytes32 proposalId = getProposalId(in_params, in_aclData, in_owner);
 
+        // Proposal IDs are deterministic, cannot create same poll twice
         if (PROPOSALS[proposalId].params.numChoices != 0) {
             revert Create_AlreadyExists();
         }
@@ -250,20 +259,22 @@ contract PollManager is IERC165, IPollManager {
     {
         Proposal storage proposal = PROPOSALS[in_proposalId];
 
+        ProposalParams storage params = proposal.params;
+
         // Proposal must be active to vote
-        if ( 0 == (proposal.params.flags & FLAG_ACTIVE) ) {
+        if ( 0 == (params.flags & FLAG_ACTIVE) ) {
             revert Vote_NotActive();
         }
 
         // No votes allowed after it's closed
-        uint closeTimestamp = proposal.params.closeTimestamp;
+        uint closeTimestamp = params.closeTimestamp;
         if( closeTimestamp != 0 ) {
             if( block.timestamp >= closeTimestamp ) {
                 revert Vote_NotActive();
             }
         }
 
-        out_weight = proposal.params.acl.canVoteOnPoll(address(this), in_proposalId, in_voter, in_data);
+        out_weight = params.acl.canVoteOnPoll(address(this), in_proposalId, in_voter, in_data);
         if( out_weight == 0 ) {
             revert Vote_NotAllowed();
         }
@@ -309,10 +320,11 @@ contract PollManager is IERC165, IPollManager {
             revert Vote_NotAllowed();
         }
 
-        if( 0 != flags & FLAG_WEIGHT_LOG10 ) {
+        // Different voting modes are implemented via flags on creation
+        if( 0 != (flags & FLAG_WEIGHT_LOG10) ) {
             weight = log10(weight);
         }
-        else if( 0 != flags & FLAG_WEIGHT_ONE ) {
+        else if( 0 != (flags & FLAG_WEIGHT_ONE) ) {
             weight = 1;
         }
 
@@ -468,13 +480,16 @@ contract PollManager is IERC165, IPollManager {
         public
     {
         Proposal storage proposal = PROPOSALS[in_proposalId];
-        uint8 flags = proposal.params.flags;
+
+        ProposalParams storage params = proposal.params;
+
+        uint8 flags = params.flags;
         if ( 0 == (flags & FLAG_ACTIVE) ) {
             revert Close_NotActive();
         }
 
         // If no timestamp is specified, only poll creator can close (at any time)
-        uint closeTimestamp = proposal.params.closeTimestamp;
+        uint closeTimestamp = params.closeTimestamp;
         if( closeTimestamp == 0 )
         {
             if( OWNERS[in_proposalId] != msg.sender ) {
@@ -493,10 +508,12 @@ contract PollManager is IERC165, IPollManager {
 
         Ballot storage ballot = s_ballots[in_proposalId];
 
+        // In constant time, find the winning option
+        // XXX: this would reveal if two or more are tied for first place
         uint256 topChoice;
         uint256 topChoiceCount;
         uint256 xorMask = ballot.xorMask;
-        for (uint8 i; i < proposal.params.numChoices; ++i)
+        for (uint8 i; i < params.numChoices; ++i)
         {
             uint256 choiceVoteCount = ballot.voteCounts[i] ^ xorMask;
             if (choiceVoteCount > topChoiceCount)
@@ -505,12 +522,13 @@ contract PollManager is IERC165, IPollManager {
                 topChoiceCount = choiceVoteCount;
             }
         }
-
         proposal.topChoice = uint8(topChoice);
-        proposal.params.flags = flags & ~FLAG_ACTIVE;
+
+        // Mark poll as inactive
+        params.flags = flags & ~FLAG_ACTIVE;
 
         // If proposal isn't hidden, remove from active list, to past list + emit events
-        if( 0 == flags & FLAG_HIDDEN )
+        if( 0 == (flags & FLAG_HIDDEN) )
         {
             ACTIVE_PROPOSALS.remove(in_proposalId);
             s_pastProposalsIndex[in_proposalId] = PAST_PROPOSALS.length;
@@ -530,7 +548,10 @@ contract PollManager is IERC165, IPollManager {
         external
     {
         Proposal storage proposal = PROPOSALS[in_proposalId];
-        if ( 0 == proposal.params.numChoices ) {
+
+        ProposalParams storage params = proposal.params;
+
+        if ( 0 == params.numChoices ) {
             revert Destroy_NotFound();
         }
 
@@ -538,7 +559,7 @@ contract PollManager is IERC165, IPollManager {
             revert Destroy_NotOwner();
         }
 
-        uint8 flags = proposal.params.flags;
+        uint8 flags = params.flags;
 
         // If poll is still active, close it!
         if( 0 != (flags & FLAG_ACTIVE) )
@@ -579,12 +600,12 @@ contract PollManager is IERC165, IPollManager {
         external view
         returns (uint256[] memory)
     {
-        Proposal storage proposal = PROPOSALS[in_proposalId];
+        ProposalParams storage params = PROPOSALS[in_proposalId].params;
 
         Ballot storage ballot = s_ballots[in_proposalId];
 
         // Cannot get vote counts while poll is still active
-        if ( 0 != (proposal.params.flags & FLAG_ACTIVE) ) {
+        if ( 0 != (params.flags & FLAG_ACTIVE) ) {
             revert Poll_StillActive();
         }
 
@@ -600,10 +621,11 @@ contract PollManager is IERC165, IPollManager {
         internal view
         returns (uint8 out_flags, uint out_count, uint out_limit, Ballot storage out_ballot)
     {
-        Proposal storage proposal = PROPOSALS[in_proposalId];
+        ProposalParams storage params = PROPOSALS[in_proposalId].params;
+
         out_ballot = s_ballots[in_proposalId];
 
-        out_flags = proposal.params.flags;
+        out_flags = params.flags;
 
         if ( 0 != (out_flags & FLAG_ACTIVE) ) {
             revert Poll_StillActive();
@@ -683,6 +705,8 @@ contract PollManager is IERC165, IPollManager {
         public pure
         returns (bytes32)
     {
-        return keccak256(abi.encode(in_owner, in_params, in_aclData));
+        bytes32 digest = keccak256(abi.encode(in_owner, in_params, in_aclData));
+
+        return bytes32(PROPOSAL_ID_MASK & uint256(digest));
     }
 }

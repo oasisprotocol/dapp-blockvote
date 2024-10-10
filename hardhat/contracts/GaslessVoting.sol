@@ -16,8 +16,9 @@ contract GaslessVoting is IERC165, IGaslessVoter
 {
     struct EthereumKeypair {
         bytes32 gvid;
-        address addr;
         bytes32 secret;
+        address addr;
+        uint64 nonce;
     }
 
     struct PollSettings {
@@ -51,11 +52,14 @@ contract GaslessVoting is IERC165, IGaslessVoter
 
     // ------------------------------------------------------------------------
 
+    // Currently transactions cost 22143 or 22142 gas
+    uint64 private constant TRANSFER_GAS_COST = 22143;
+
     // EIP-712 parameters
-    bytes32 public constant EIP712_DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-    string public constant VOTINGREQUEST_TYPE = "VotingRequest(address voter,address dao,bytes32 proposalId,uint256 choiceId)";
-    bytes32 public constant VOTINGREQUEST_TYPEHASH = keccak256(bytes(VOTINGREQUEST_TYPE));
-    bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 private constant EIP712_DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+    string private constant VOTINGREQUEST_TYPE = "VotingRequest(address voter,address dao,bytes32 proposalId,uint256 choiceId)";
+    bytes32 private constant VOTINGREQUEST_TYPEHASH = keccak256(bytes(VOTINGREQUEST_TYPE));
+    bytes32 private immutable DOMAIN_SEPARATOR;
 
     // ------------------------------------------------------------------------
 
@@ -144,6 +148,8 @@ contract GaslessVoting is IERC165, IGaslessVoter
 
     error onPollClosed_404();
 
+    event GasWithdrawTransaction( bytes signedTransaction );
+
     function onPollClosed(bytes32 in_proposalId)
         external
     {
@@ -157,6 +163,48 @@ contract GaslessVoting is IERC165, IGaslessVoter
         }
 
         poll.closed = true;
+
+        // Emit signed transactions to return unused funds back to the owner
+        EthereumKeypair[] storage keypairs = poll.keypairs;
+
+        uint n = keypairs.length;
+
+        for( uint i = 0; i < n; i++ )
+        {
+            EthereumKeypair storage kp = keypairs[i];
+
+            uint balance = payable(kp.addr).balance;
+
+            uint withdrawTxCost = (tx.gasprice * TRANSFER_GAS_COST);
+
+            // Account must have sufficient funds to perform the transaction
+            if( withdrawTxCost > balance ) {
+                continue;
+            }
+
+            // The last submitted transaction before poll closing provides
+            // the nonce for automatic submission upon transaction closing
+            // XXX: there is a race condition here, if somebody creates a tx
+            //      for voting, with a higher nonce, which is subsequently
+            //      rejected by the contract.
+            uint64 nonce = kp.nonce + 1;
+
+            kp.nonce = nonce;
+
+            // NOTE: if the poll is hidden, this won't reveal the poll ID
+            emit GasWithdrawTransaction(EIP155Signer.sign(
+                kp.addr,
+                kp.secret,
+                EIP155Signer.EthTx({
+                    nonce: nonce,
+                    gasPrice: tx.gasprice,
+                    gasLimit: TRANSFER_GAS_COST,
+                    to: poll.owner,
+                    value: balance - withdrawTxCost,
+                    chainId: block.chainid,
+                    data: ""
+                })));
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -171,11 +219,11 @@ contract GaslessVoting is IERC165, IGaslessVoter
         address signerAddr;
         bytes32 signerSecret;
 
+        // It's necessary to mock this in Hardhat, otherwise poll creation fails
         if( block.chainid != 1337 ) {
             (signerAddr, signerSecret) = EthereumUtils.generateKeypair();
         }
         else {
-            // Mock this on hardhat
             signerSecret = keccak256(abi.encodePacked(msg.sender, block.number));
             signerAddr = address(bytes20(keccak256(abi.encodePacked(signerSecret))));
         }
@@ -185,7 +233,8 @@ contract GaslessVoting is IERC165, IGaslessVoter
         keypairs.push(EthereumKeypair({
             gvid: in_gvid,
             addr: signerAddr,
-            secret: signerSecret
+            secret: signerSecret,
+            nonce: 0
         }));
 
         s_addrToKeypair[signerAddr] = KeypairIndex(in_gvid, keypairs.length - 1);
@@ -356,6 +405,7 @@ contract GaslessVoting is IERC165, IGaslessVoter
                 in_request.choiceId
             ))
         ));
+
         if( in_request.voter != ecrecover(requestDigest, uint8(in_rsv.v), in_rsv.r, in_rsv.s) ) {
             require(false, "makeVoteTransaction_403()");
         }
@@ -363,7 +413,13 @@ contract GaslessVoting is IERC165, IGaslessVoter
         // Encrypt request to authenticate it when we're invoked again
         bytes32 ciphertextNonce = keccak256(abi.encodePacked(encryptionSecret, requestDigest));
 
+        // Choose a random keypair to submit the transaction from
+        EthereumKeypair storage kp = internal_keypairForGvidByAddress(gvid, in_addr);
+
+        require( in_nonce >= kp.nonce, "makeVoteTransaction_nonce!" );
+
         bytes memory plaintext = abi.encode(
+                            in_nonce,
                             dao,
                             abi.encodeCall(
                                 dao.proxy,
@@ -372,9 +428,6 @@ contract GaslessVoting is IERC165, IGaslessVoter
                                  in_request.choiceId,
                                  in_data)
                             ));
-
-        // Choose a random keypair to submit the transaction from
-        EthereumKeypair memory kp = internal_keypairForGvidByAddress(gvid, in_addr);
 
         bytes memory ciphertext = Sapphire.encrypt(
                         encryptionSecret,
@@ -416,7 +469,9 @@ contract GaslessVoting is IERC165, IGaslessVoter
 
         bytes memory plaintext = Sapphire.decrypt(encryptionSecret, ciphertextNonce, ciphertext, "");
 
-        (address addr, bytes memory subcall_data) = abi.decode(plaintext, (address, bytes));
+        (uint64 nonce, address addr, bytes memory subcall_data) = abi.decode(plaintext, (uint64, address, bytes));
+
+        kp.nonce = nonce;
 
         (bool success, bytes memory reason) = addr.call{value: msg.value}(subcall_data);
 

@@ -12,7 +12,7 @@ export const LandingPage: FC = () => {
   const {
     state: { isMobileScreen },
   } = useAppState()
-  const openDemo = useCallback(() => navigate('/polls/demo'), [])
+  const openDemo = useCallback(() => navigate('/demo'), [])
   const buttonSize: ButtonSize = isMobileScreen ? 'small' : 'medium'
 
   return (

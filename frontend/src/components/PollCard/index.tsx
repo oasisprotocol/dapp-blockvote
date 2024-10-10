@@ -27,6 +27,7 @@ import { AnimatePresence } from 'framer-motion'
 import { Button } from '../Button'
 import { MotionDiv } from '../Animations'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
+import { proposalIdToSlug } from '../../utils/slug'
 
 const Arrow: FC<{ className: string }> = ({ className }) => (
   <svg
@@ -92,6 +93,8 @@ export const PollCard: FC<{
   } = useExtendedPoll(proposal, {
     onDashboard: true,
   })
+
+  const slug = proposalIdToSlug(proposalId!);
 
   const {
     id: pollId,
@@ -172,7 +175,7 @@ export const PollCard: FC<{
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Link to={`/polls/${pollId}`} style={{ textDecoration: 'none' }}>
+          <Link to={`/${slug}`} style={{ textDecoration: 'none' }}>
             <div className={classes.pollCard}>
               <div className={classes.pollCardTop}>
                 {error && (
