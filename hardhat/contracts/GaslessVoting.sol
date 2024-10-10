@@ -146,6 +146,24 @@ contract GaslessVoting is IERC165, IGaslessVoter
 
     // ------------------------------------------------------------------------
 
+    function onPollDestroyed(bytes32 in_proposalId) external
+    {
+        bytes32 gvid = internal_gvid(msg.sender, in_proposalId);
+
+        PollSettings storage poll = s_polls[gvid];
+
+        for( uint i = 0; i < poll.keypairs.length; i++ )
+        {
+            EthereumKeypair storage kp = poll.keypairs[i];
+
+            delete s_addrToKeypair[kp.addr];
+        }
+
+        delete s_polls[gvid];
+    }
+
+    // ------------------------------------------------------------------------
+
     error onPollClosed_404();
 
     event GasWithdrawTransaction( bytes signedTransaction );

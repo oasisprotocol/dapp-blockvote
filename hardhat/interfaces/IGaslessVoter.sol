@@ -16,6 +16,8 @@ interface IGaslessVoter {
 
     function onPollClosed(bytes32 proposalId) external;
 
+    function onPollDestroyed(bytes32 proposalId) external;
+
     function makeVoteTransaction(
         address addr,
         uint64 nonce,

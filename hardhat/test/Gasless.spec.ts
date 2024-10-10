@@ -123,5 +123,9 @@ describe('Gasless voting', () => {
       expect(balance <= 10000000000000n).eq(true);
       console.log('        -', gva, formatEther(balance));
     }
+
+    const destroyTx = await pm.destroy(proposalId);
+    const destroyReceipt = await destroyTx.wait();
+    expect(destroyReceipt?.status).eq(1);
   });
 });

@@ -567,6 +567,8 @@ contract PollManager is IERC165, IPollManager {
             close(in_proposalId);
         }
 
+        params.acl.onPollDestroyed(in_proposalId);
+
         delete PROPOSALS[in_proposalId];
 
         Ballot storage ballot = s_ballots[in_proposalId];

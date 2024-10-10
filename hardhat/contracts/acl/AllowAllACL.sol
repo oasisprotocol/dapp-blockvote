@@ -34,6 +34,11 @@ contract AllowAllACL is IPollACL, IPollManagerACL
         // Do nothing
     }
 
+    function onPollDestroyed(bytes32 proposalId) external
+    {
+        // Do nothing
+    }
+
     function canVoteOnPoll(address, bytes32, address, bytes calldata)
         external pure
         returns(uint)
