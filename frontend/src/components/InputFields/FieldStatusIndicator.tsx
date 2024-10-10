@@ -2,7 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import { FC } from 'react'
 import { CheckCircleIcon } from '../icons/CheckCircleIcon'
 import { SpinnerIcon } from '../icons/SpinnerIcon'
-import { checkProblems, Problem } from './util'
+import { checkMessagesForProblems, FieldMessage } from './util'
 import { InputFieldControls } from './useInputField'
 import { WarningCircleIcon } from '../icons/WarningCircleIcon'
 import { MotionDiv } from '../Animations'
@@ -11,12 +11,12 @@ export const FieldStatusIndicators: FC<
   Pick<
     InputFieldControls<any>,
     'indicateValidationPending' | 'indicateValidationSuccess' | 'validationPending' | 'isValidated'
-  > & { problems: Problem[] }
+  > & { messages: FieldMessage[] }
 > = props => {
-  const { indicateValidationPending, indicateValidationSuccess, validationPending, isValidated, problems } =
+  const { indicateValidationPending, indicateValidationSuccess, validationPending, isValidated, messages } =
     props
-  const { hasError } = checkProblems(problems)
-  const hasNoProblems = !problems.length
+  const { hasError, hasWarning } = checkMessagesForProblems(messages)
+  const hasNoProblems = !hasError && !hasWarning
   const showSuccess = isValidated && indicateValidationSuccess && hasNoProblems
   const showPending = validationPending && indicateValidationPending
   const showError = hasError && !validationPending

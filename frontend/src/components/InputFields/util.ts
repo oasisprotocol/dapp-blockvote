@@ -1,47 +1,47 @@
 import { MarkdownCode } from '../../types'
 
-export type ProblemLevel = 'warning' | 'error'
+export type FieldMessageType = 'info' | 'warning' | 'error'
 
-export type Problem = {
+export type FieldMessage = {
   signature?: string
-  message: string
-  level?: ProblemLevel
+  text: MarkdownCode
+  type?: FieldMessageType
 }
 
-export type ProblemReport = Problem & { location?: string }
-export type ProblemAtLocation = Problem & { location: string }
+export type MessageMaybeAtLocation = FieldMessage & { location?: string }
+export type MessageAtLocation = FieldMessage & { location: string }
 
-type ValidatorProduct = ProblemReport | string | undefined
+export type ValidatorOutput = MessageMaybeAtLocation | string | undefined
 
-export const wrapProblem = (
-  problem: ValidatorProduct,
+export const wrapValidatorOutput = (
+  output: ValidatorOutput,
   defaultLocation: string,
-  defaultLevel: ProblemLevel,
-): ProblemAtLocation | undefined => {
-  if (problem === undefined || problem === '') return undefined
-  if (typeof problem === 'string') {
-    const cutPos = problem.indexOf(':')
+  defaultLevel: FieldMessageType,
+): MessageAtLocation | undefined => {
+  if (output === undefined || output === '') return undefined
+  if (typeof output === 'string') {
+    const cutPos = output.indexOf(':')
     if (cutPos !== -1) {
-      const signature = problem.substring(0, cutPos)
+      const signature = output.substring(0, cutPos)
       if (!signature.includes(' ')) {
         return {
           signature,
-          message: problem.substring(cutPos + 1).trim(),
-          level: defaultLevel,
+          text: output.substring(cutPos + 1).trim(),
+          type: defaultLevel,
           location: defaultLocation,
         }
       }
     }
     return {
-      message: problem,
-      level: defaultLevel,
+      text: output,
+      type: defaultLevel,
       location: defaultLocation,
     }
   } else {
-    const report = problem as ProblemReport
+    const report = output as MessageMaybeAtLocation
     return {
       ...report,
-      level: report.level ?? 'error',
+      type: report.type ?? 'error',
       location: report.location ?? defaultLocation,
     }
   }
@@ -53,7 +53,7 @@ export function flatten<Data>(array: Data[][]): Data[] {
   return result
 }
 
-export type AllProblems = Record<string, Problem[]>
+export type AllMessages = Record<string, FieldMessage[]>
 
 export type ValidatorControls = {
   isStillFresh: () => boolean
@@ -64,17 +64,17 @@ export type SyncValidatorFunction<DataType> = (
   value: DataType,
   controls: ValidatorControls,
   reason: string,
-) => SingleOrArray<ValidatorProduct>
+) => SingleOrArray<ValidatorOutput>
 export type AsyncValidatorFunction<DataType> = (
   value: DataType,
   controls: ValidatorControls,
   reason: string,
-) => Promise<SingleOrArray<ValidatorProduct>>
+) => Promise<SingleOrArray<ValidatorOutput>>
 export type ValidatorFunction<DataType> = SyncValidatorFunction<DataType> | AsyncValidatorFunction<DataType>
 
-export const checkProblems = (problems: Problem[] = []) => ({
-  hasWarning: problems.some(problem => problem.level === 'warning'),
-  hasError: problems.some(problem => problem.level === 'error'),
+export const checkMessagesForProblems = (messages: FieldMessage[] = []) => ({
+  hasWarning: messages.some(message => message.type === 'warning'),
+  hasError: messages.some(message => message.type === 'error'),
 })
 
 export type SingleOrArray<Data> = Data | Data[]

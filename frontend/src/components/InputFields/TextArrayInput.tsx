@@ -2,8 +2,8 @@ import React, { FC, useCallback } from 'react'
 import { TextArrayControls } from './useTextArrayField'
 import classes from './index.module.css'
 import { StringUtils } from '../../utils/string.utils'
-import { ProblemList } from './ProblemDisplay'
-import { checkProblems } from './util'
+import { FieldMessageList } from './FieldMessageDisplay'
+import { checkMessagesForProblems } from './util'
 import { SpinnerIcon } from '../icons/SpinnerIcon'
 import { AnimatePresence } from 'framer-motion'
 import { WithVisibility } from './WithVisibility'
@@ -79,8 +79,8 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
     addItem,
     removeItemLabel,
     removeItem,
-    allProblems,
-    clearProblem,
+    allMessages,
+    clearMessage,
     enabled,
     whyDisabled,
     validationPending,
@@ -101,7 +101,7 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
     <WithVisibility field={props}>
       <WithLabelAndDescription field={props}>
         <div className={classes.textArrayValue}>
-          <ProblemList problems={allProblems.root} onRemove={clearProblem} />
+          <FieldMessageList messages={allMessages.root} onRemove={clearMessage} />
           {validationPending && pendingValidationIndex === undefined && (
             <div className={'niceLine'}>
               {validationStatusMessage}
@@ -110,8 +110,8 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
           )}
           <AnimatePresence initial={false}>
             {value.map((value, index) => {
-              const itemProblems = allProblems[`value-${index}`] || []
-              const { hasError, hasWarning } = checkProblems(itemProblems)
+              const itemMessages = allMessages[`value-${index}`] || []
+              const { hasError, hasWarning } = checkMessagesForProblems(itemMessages)
 
               return (
                 // <WithVisibility
@@ -156,9 +156,9 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
                         isValidated && !hasProblems,
                       validationStatusMessage:
                         pendingValidationIndex === index ? validationStatusMessage : undefined,
-                      clearProblem,
+                      clearMessage,
                     }}
-                    problems={itemProblems}
+                    messages={itemMessages}
                     extraWidget={
                       canRemoveItem(index) ? (
                         <TrashIcon

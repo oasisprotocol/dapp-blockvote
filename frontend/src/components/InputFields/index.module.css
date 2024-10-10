@@ -68,6 +68,11 @@
   color: chocolate;
 }
 
+.fieldInfo {
+  padding-top: 4px;
+  color: black;
+}
+
 .textValue {
   width: 99%;
 
