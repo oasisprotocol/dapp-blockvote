@@ -73,5 +73,9 @@ export function proposalIdToSlug(proposalId:BytesLike) {
 }
 
 export function slugToProposalId(slug:string) {
+    // Special case for demo poll
+    if( slug === 'demo' ) {
+      return slug;
+    }
     return hexlify(base32Decode(slug.toLowerCase())).substring(2).padEnd(64, '0');
 }
