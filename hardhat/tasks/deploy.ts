@@ -159,6 +159,9 @@ task('deploy')
       (x) => x.chainId === hre.network.config.chainId,
     );
     const currentNetworkUrl = (currentNetwork as any).url;
+    if (!env['VITE_APP_ROOT_URL']) {
+      setenv('VITE_APP_ROOT_URL', 'http://vote.oasis.io');
+    }
     setenv('VITE_NETWORK', String(hre.network.config.chainId!));
     if (!currentNetworkUrl) {
       setenv('VITE_WEB3_GATEWAY', 'http://localhost:8545');

@@ -29,6 +29,7 @@ dist-ssr
 
 # vite-bundle-visualizer output
 stats.html
+.env.development
 .env.*.local
 stats.html
 .netlify
