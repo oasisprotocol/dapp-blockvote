@@ -169,6 +169,13 @@ export type InputFieldControls<DataType> = Pick<
   allMessages: AllMessages
   hasProblems: boolean
   isValidated: boolean
+
+  /**
+   * Run validation on this field.
+   *
+   * Will update field messages.
+   * Returns true if there is an error.
+   */
   validate: (params: ValidationParams) => Promise<boolean>
   validationPending: boolean
   validationStatusMessage: string | undefined
