@@ -266,6 +266,14 @@ export const completePoll = async (eth: EthereumContext, pollManager: PollManage
   await eth.switchNetwork() // ensure we're on the correct network first!
   // console.log("Preparing complete tx...")
 
+  // TODO: remove listener when no longer needed
+  const sub = await pollManager.on(pollManager.getEvent('ProposalClosed'), event => {
+    console.log('Incoming proposal close event', event)
+    // TODO: test if this is about the current poll, and react accordingly
+  })
+
+  console.log('Event subscription', sub) // TODO: remove debug output
+
   const tx = await pollManager.close(proposalId)
   // console.log('Complete proposal tx', tx);
 
