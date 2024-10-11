@@ -6,6 +6,10 @@
   align-items: center;
   overflow: hidden;
   gap: 16px;
+
+  button {
+    width: 100%;
+  }
 }
 
 .fieldRow {
