@@ -10,7 +10,7 @@ export const WithLabelAndDescription: FC<
 
   if (compact) {
     return description ? (
-      <label>
+      <label className={classes.fieldLabelTag}>
         <div className={classes.fieldDescription}>{description}</div>
         {children}
       </label>
@@ -19,7 +19,7 @@ export const WithLabelAndDescription: FC<
     )
   } else {
     return !!label || !!description ? (
-      <label>
+      <label className={classes.fieldLabelTag}>
         <div className={classes.fieldLabel}>{label}</div>
         <div className={classes.fieldDescription}>{description}</div>
         {children}

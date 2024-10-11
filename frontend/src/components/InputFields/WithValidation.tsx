@@ -31,7 +31,6 @@ export const WithValidation: FC<
     <div
       className={StringUtils.clsx(
         ...fieldClasses,
-        classes.textValue,
         hasError ? classes.fieldWithError : hasWarning ? classes.fieldWithWarning : '',
       )}
     >
