@@ -31,11 +31,12 @@ export const validateFields = async (
    */
   isStillFresh: () => boolean,
 ): Promise<boolean> => {
-  const visibleFields = fields.flatMap(config => getAsArray(config)).filter(field => field.visible)
+  // Get a flattened list of fields
+  const allFields = fields.flatMap(config => getAsArray(config))
   let hasError = false
-  for (const field of visibleFields) {
-    const isFieldOK = await field.validate({ reason, isStillFresh })
-    hasError = hasError || !isFieldOK
+  for (const field of allFields) {
+    const isFieldProblematic = await field.validate({ reason, isStillFresh })
+    hasError = hasError || isFieldProblematic
   }
   return hasError
 }

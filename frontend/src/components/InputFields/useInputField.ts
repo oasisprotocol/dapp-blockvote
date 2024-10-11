@@ -164,6 +164,7 @@ export type InputFieldControls<DataType> = Pick<
   whyDisabled?: MarkdownCode
   containerClassName?: string
   value: DataType
+  cleanValue: DataType
   setValue: (value: DataType) => void
   reset: () => void
   allMessages: AllMessages
@@ -312,6 +313,10 @@ export function useInputField<DataType>(
   }
 
   const validate = async (params: ValidationParams): Promise<boolean> => {
+    if (!visible) {
+      // We don't care about hidden fields
+      return false
+    }
     const { forceChange = false, reason, isStillFresh } = params
     const wasOK = isValidated && !hasProblems
 
@@ -371,7 +376,7 @@ export function useInputField<DataType>(
       setLastValidatedData(cleanValue)
 
       // Do we have any actual errors?
-      return !currentMessages.some(message => message.type === 'error')
+      return currentMessages.some(message => message.type === 'error')
     } else {
       return false
     }
@@ -422,6 +427,7 @@ export function useInputField<DataType>(
     compact,
     placeholder,
     value,
+    cleanValue,
     setValue,
     reset,
     allMessages: allMessages,
