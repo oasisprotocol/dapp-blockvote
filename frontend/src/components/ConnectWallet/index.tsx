@@ -62,19 +62,6 @@ export const ConnectWallet: FC<Props> = ({ mobileSticky, avoidButtonClasses = fa
     }
   }
 
-  console.log(
-    'connected?',
-    isConnected,
-    'isProviderAvailable?',
-    isProviderAvailable,
-    'homeChain?',
-    isHomeChain,
-    'userAddress:',
-    userAddress,
-    'chainId:',
-    chainId,
-  )
-
   return (
     <>
       {!isConnected && !isProviderAvailable && (
