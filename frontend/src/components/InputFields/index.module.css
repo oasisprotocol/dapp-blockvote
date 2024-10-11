@@ -177,6 +177,11 @@
   cursor: pointer;
 }
 
+.addIconDisabled {
+  color: gray;
+  cursor: not-allowed;
+}
+
 .disabled {
   color: gray;
 }
