@@ -192,6 +192,11 @@ type DataTypeTools<DataType> = {
   isEqual: (data1: DataType, data2: DataType) => boolean
 }
 
+export const noType: DataTypeTools<void> = {
+  isEmpty: () => true,
+  isEqual: () => true,
+}
+
 const calculateVisible = (controls: Pick<InputFieldProps<any>, 'name' | 'hidden' | 'visible'>): boolean => {
   const { name, hidden, visible } = controls
   if (visible === undefined) {
