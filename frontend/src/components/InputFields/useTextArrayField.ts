@@ -235,11 +235,27 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
       ...props,
       initialValue,
       cleanUp: values => {
-        const cleanValues = values.map(s => s.trim())
-        return dropEmptyItems ? cleanValues.filter(s => !!s) : cleanValues
+        let cleanValues = values.map(s => s.trim())
+        if (dropEmptyItems) {
+          const filteredValues = cleanValues.filter(s => !!s)
+          if (!minItemCount || filteredValues.length >= minItemCount) {
+            cleanValues = filteredValues
+          }
+        }
+        return cleanValues
       },
       validators: undefined,
       validatorsGenerator: values => [
+        // Do we have enough elements?
+        minItemCount
+          ? (values, _control, reason) => {
+              const currentCount = values.filter(v => !!v).length
+              return currentCount < minItemCount && reason !== 'change'
+                ? `tooFew:${getNumberMessage(tooFewItemsMessage, minItemCount)} (Currently, ${thereIsOnly(currentCount)}.)`
+                : undefined
+            }
+          : undefined,
+
         // No empty elements, please
         allowEmptyItems && dropEmptyItems
           ? undefined
@@ -255,16 +271,6 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
                           location: `value-${index}`,
                         },
                   ),
-
-        // Do we have enough elements?
-        minItemCount
-          ? (values, _control, reason) => {
-              const currentCount = values.filter(v => !!v).length
-              return currentCount < minItemCount && reason !== 'change'
-                ? `tooFew:${getNumberMessage(tooFewItemsMessage, minItemCount)} (Currently, ${thereIsOnly(currentCount)}.)`
-                : undefined
-            }
-          : undefined,
 
         // Do we have too many elements?
         maxItemCount
