@@ -22,7 +22,7 @@ import { designDecisions, MIN_COMPLETION_TIME_MINUTES, nativeTokenName } from '.
 
 import { useNavigate } from 'react-router-dom'
 import { acls } from '../../components/ACLs'
-import { proposalIdToSlug } from '../../utils/slug'
+import { getPollPath } from '../../utils/path.utils'
 
 // The steps / pages of the wizard
 const StepTitles = {
@@ -356,8 +356,7 @@ export const useCreatePollForm = () => {
       const newId = await doCreatePoll(daoSigner, eth.state.address, pollProps, logger)
 
       if (newId) {
-        const slug = proposalIdToSlug(newId);
-        navigate(`/${slug}`)
+        navigate(getPollPath(newId))
       }
     } catch (ex) {
       let exString = `${ex}`

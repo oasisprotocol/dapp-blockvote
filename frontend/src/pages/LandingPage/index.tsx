@@ -6,13 +6,14 @@ import { Button, ButtonSize } from '../../components/Button'
 import { useNavigate } from 'react-router-dom'
 import { useAppState } from '../../hooks/useAppState'
 import { appName } from '../../constants/config'
+import { getPollPath } from '../../utils/path.utils'
 
 export const LandingPage: FC = () => {
   const navigate = useNavigate()
   const {
     state: { isMobileScreen },
   } = useAppState()
-  const openDemo = useCallback(() => navigate('/demo'), [])
+  const openDemo = useCallback(() => navigate(getPollPath('demo')), [])
   const buttonSize: ButtonSize = isMobileScreen ? 'small' : 'medium'
 
   return (

@@ -6,7 +6,7 @@ import { useBooleanField, useOneOfField, useTextField } from '../../components/I
 import { useNavigate } from 'react-router-dom'
 import { dashboard, designDecisions } from '../../constants/config'
 import classes from './index.module.css'
-import { proposalIdToSlug } from '../../utils/slug'
+import { getPollPath } from '../../utils/path.utils'
 
 const FETCH_BATCH_SIZE = 100
 
@@ -241,8 +241,8 @@ export const useDashboardData = () => {
     onEnter: () => {
       const cards = allVisiblePollIds
       if (cards.length !== 1) return // We can only do this is there is exactly one matching card
-      const slug = proposalIdToSlug(Array.from(cards.values())[0]);
-      navigate(`/${slug}`)
+      const pollId = Array.from(cards.values())[0]
+      navigate(getPollPath(pollId))
     },
   })
 

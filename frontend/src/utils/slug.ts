@@ -1,4 +1,4 @@
-import { BytesLike, getBytes, hexlify } from 'ethers'
+import { getBytes, hexlify } from 'ethers'
 
 // https://en.wikipedia.org/wiki/Base32#z-base-32
 const BASE32_ALPHABET = 'ybndrfg8ejkmcpqxot1uwisza345h769'
@@ -65,8 +65,8 @@ function removeTrailingZeros(arr: Uint8Array): Uint8Array {
   return arr.slice(0, lastNonZeroIndex + 1)
 }
 
-export function proposalIdToSlug(proposalId: BytesLike) {
-  const bytes = removeTrailingZeros(getBytes(proposalId))
+export function proposalIdToSlug(proposalId: string) {
+  const bytes = removeTrailingZeros(getBytes(proposalId.startsWith('0x') ? proposalId : `0x${proposalId}`))
   return base32Encode(ensureMinLength(bytes, SLUG_BYTES))
 }
 

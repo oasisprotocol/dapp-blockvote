@@ -25,7 +25,7 @@ const router = createHashRouter([
         element: <CreatePollPage />,
       },
       {
-        path: ':pollId',
+        path: ':slug',
         element: <PollPage />,
       },
     ],
