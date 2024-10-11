@@ -1,26 +1,25 @@
 import classes from './index.module.css'
-import { FocusEventHandler, forwardRef, MouseEventHandler, PropsWithChildren } from 'react'
+import { forwardRef, MouseEventHandler, PropsWithChildren } from 'react'
 import { StringUtils } from '../../utils/string.utils'
 import { SpinnerIcon } from '../icons/SpinnerIcon'
+import { TooltipBase } from '../Tooltip/MaybeWithTooltip'
 
 export type ButtonSize = 'small' | 'medium'
 export type ButtonColor = 'primary' | 'secondary' | 'success'
 export type ButtonVariant = 'solid' | 'outline' | 'text'
 
-interface Props extends PropsWithChildren {
-  disabled?: boolean
-  color?: ButtonColor
-  size?: ButtonSize
-  variant?: ButtonVariant
-  fullWidth?: boolean
-  onClick?: MouseEventHandler<HTMLButtonElement>
-  onMouseEnter?: MouseEventHandler<HTMLButtonElement>
-  onMouseLeave?: MouseEventHandler<HTMLButtonElement>
-  onFocus?: FocusEventHandler<HTMLButtonElement>
-  className?: string
-  type?: 'submit' | 'reset' | 'button'
-  pending?: boolean
-}
+type Props = PropsWithChildren &
+  TooltipBase & {
+    disabled?: boolean
+    color?: ButtonColor
+    size?: ButtonSize
+    variant?: ButtonVariant
+    fullWidth?: boolean
+    onClick?: MouseEventHandler<HTMLButtonElement>
+    className?: string
+    type?: 'submit' | 'reset' | 'button'
+    pending?: boolean
+  }
 
 const sizeMap: Record<ButtonSize, string> = {
   small: classes.buttonSmall,
