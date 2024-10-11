@@ -234,16 +234,7 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
     {
       ...props,
       initialValue,
-      cleanUp: values => {
-        let cleanValues = values.map(s => s.trim())
-        if (dropEmptyItems) {
-          const filteredValues = cleanValues.filter(s => !!s)
-          if (!minItemCount || filteredValues.length >= minItemCount) {
-            cleanValues = filteredValues
-          }
-        }
-        return cleanValues
-      },
+      cleanUp: values => values.map(s => s.trim()),
       validators: undefined,
       validatorsGenerator: values => [
         // Do we have enough elements?
@@ -257,7 +248,7 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
           : undefined,
 
         // No empty elements, please
-        allowEmptyItems && dropEmptyItems
+        allowEmptyItems || dropEmptyItems
           ? undefined
           : (values, _control, reason) =>
               reason === 'change'
@@ -338,7 +329,7 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
       ],
     },
     {
-      isEmpty: value => !value.length,
+      isEmpty: value => !value.some(v => !!v),
       isEqual: (a, b) => a.join('-') === b.join('-'),
     },
   )
@@ -380,6 +371,14 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
     if (onItemEdited) {
       onItemEdited(index, value, newControls)
     }
+  }
+
+  newControls.validate = async params => {
+    const hasError = await controls.validate(params)
+    if (!hasError && dropEmptyItems) {
+      controls.setValue(controls.cleanValue.filter(s => !!s))
+    }
+    return hasError
   }
 
   return newControls
