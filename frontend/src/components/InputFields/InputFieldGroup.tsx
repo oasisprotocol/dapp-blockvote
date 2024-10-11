@@ -21,6 +21,7 @@ export const InputFieldGroup: FC<InputFieldGroupProps> = ({ fields, alignRight }
             name: `group-${index}`,
             containerClassName: alignRight ? classes.fieldRowRight : classes.fieldRow,
           }}
+          padding={false}
         >
           {row.map(field => (
             <InputField key={field.name} controls={field as any} />
