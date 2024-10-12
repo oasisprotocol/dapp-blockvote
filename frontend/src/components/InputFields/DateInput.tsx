@@ -27,7 +27,7 @@ export const DateInput: FC<DateFieldControls> = props => {
   return (
     <WithVisibility field={props}>
       <WithLabelAndDescription field={props}>
-        <WithValidation field={props} messages={allMessages.root}>
+        <WithValidation field={props} messages={allMessages.root} fieldClasses={[classes.dateValue]}>
           <MaybeWithTooltip overlay={whyDisabled}>
             <input
               name={name}

@@ -27,7 +27,11 @@ export const BooleanInput: FC<BooleanFieldControls> = props => {
       <WithValidation field={props} messages={allMessages.root}>
         <MaybeWithTooltip overlay={whyDisabled ?? description}>
           <div
-            className={StringUtils.clsx('niceLine', enabled ? classes.pointer : classes.disabled)}
+            className={StringUtils.clsx(
+              'niceLine',
+              classes.boolValue,
+              enabled ? classes.pointer : classes.disabled,
+            )}
             onClick={handleLabelClick}
           >
             <input
