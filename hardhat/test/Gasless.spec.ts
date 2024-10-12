@@ -14,7 +14,15 @@ describe('Gasless voting', () => {
     acl_allowall = await deployContract('AllowAllACL');
     const acl_allowall_addr = await acl_allowall.getAddress();
 
-    gv = await deployContract('GaslessVoting');
+    const cde = await deployContract('CalldataEncryption');
+
+    gv = await (await ethers.getContractFactory('GaslessVoting', {
+      libraries: {
+        CalldataEncryption: await cde.getAddress()
+      }
+    })).deploy();
+    await gv.waitForDeployment();
+    console.log('  -', 'GaslessVoting', await gv.getAddress());
 
     pm = await deployContract('PollManager', acl_allowall_addr, await gv.getAddress());
   });
@@ -86,11 +94,17 @@ describe('Gasless voting', () => {
           new Uint8Array([]),
           rsv,
         );
+
         const gvResponse = await ethers.provider.broadcastTransaction(gvTx);
         const gvReceipt = await gvResponse.wait();
         expect(gvReceipt?.status).eq(1);
 
-        console.log('        -', gvAddr, formatEther(await ethers.provider.getBalance(gvAddr)));
+        console.log('        -',
+          gvAddr,
+          `balance:${formatEther(await ethers.provider.getBalance(gvAddr))}`,
+          `tx.gas:${gvReceipt!.cumulativeGasUsed}`,
+          `tx.cost:${formatEther(gvReceipt!.gasPrice * gvReceipt!.cumulativeGasUsed)}`
+        );
       }
     }
 
@@ -121,7 +135,7 @@ describe('Gasless voting', () => {
     for (const gva of gvAddresses.out_addrs) {
       const balance = await ethers.provider.getBalance(gva);
       expect(balance <= 10000000000000n).eq(true);
-      console.log('        -', gva, formatEther(balance));
+      console.log('        -', gva, `balance:${formatEther(balance)}`);
     }
 
     const destroyTx = await pm.destroy(proposalId);

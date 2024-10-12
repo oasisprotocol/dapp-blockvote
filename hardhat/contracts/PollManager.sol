@@ -10,8 +10,27 @@ import { IPollACL } from "../interfaces/IPollACL.sol";
 import { IPollManagerACL } from "../interfaces/IPollManagerACL.sol";
 import { IGaslessVoter } from "../interfaces/IGaslessVoter.sol";
 
+library Flag {
+    // Must have all flags exactly
+    function has(uint8 flags, uint8 whichFlag)
+        internal pure
+        returns (bool)
+    {
+        return (flags & whichFlag) == whichFlag;
+    }
+
+    // Has one or more of the FLAGS|WHICH|OR|TOGETHER
+    function hasAny(uint8 flags, uint8 whichFlag)
+        internal pure
+        returns (bool)
+    {
+        return (flags & whichFlag) != 0;
+    }
+}
+
 contract PollManager is IERC165, IPollManager {
     using EnumerableSet for EnumerableSet.Bytes32Set;
+    using Flag for uint8;
 
     // Truncate proposal IDs to the first 8 bytes, to provide short URLs
     uint internal constant PROPOSAL_ID_N_BYTES = 8;
@@ -234,7 +253,7 @@ contract PollManager is IERC165, IPollManager {
         }
 
         // Hidden proposals will not show in the public list
-        if( 0 == (in_params.flags & FLAG_HIDDEN) )
+        if( ! in_params.flags.has(FLAG_HIDDEN) )
         {
             ACTIVE_PROPOSALS.add(proposalId);
 
@@ -262,7 +281,7 @@ contract PollManager is IERC165, IPollManager {
         ProposalParams storage params = proposal.params;
 
         // Proposal must be active to vote
-        if ( 0 == (params.flags & FLAG_ACTIVE) ) {
+        if ( ! params.flags.has(FLAG_ACTIVE) ) {
             revert Vote_NotActive();
         }
 
@@ -307,7 +326,7 @@ contract PollManager is IERC165, IPollManager {
         uint8 flags = proposal.params.flags;
 
         // Cannot vote if we have 0 weight. Prevents internal confusion with weight=0
-        if( 0 == (flags & FLAG_ACTIVE) )
+        if( ! flags.has(FLAG_ACTIVE) )
         {
             revert Vote_NotActive();
         }
@@ -321,10 +340,10 @@ contract PollManager is IERC165, IPollManager {
         }
 
         // Different voting modes are implemented via flags on creation
-        if( 0 != (flags & FLAG_WEIGHT_LOG10) ) {
+        if( flags.has(FLAG_WEIGHT_LOG10) ) {
             weight = log10(weight);
         }
-        else if( 0 != (flags & FLAG_WEIGHT_ONE) ) {
+        else if( flags.has(FLAG_WEIGHT_ONE) ) {
             weight = 1;
         }
 
@@ -371,7 +390,7 @@ contract PollManager is IERC165, IPollManager {
         {
             ballot.totalVotes += existingWeight;
 
-            if ( 0 != (flags & (FLAG_PUBLISH_VOTERS|FLAG_PUBLISH_VOTES)) )
+            if ( flags.hasAny(FLAG_PUBLISH_VOTERS|FLAG_PUBLISH_VOTES) )
             {
                 ballot.voters.push(in_voter);
             }
@@ -484,7 +503,7 @@ contract PollManager is IERC165, IPollManager {
         ProposalParams storage params = proposal.params;
 
         uint8 flags = params.flags;
-        if ( 0 == (flags & FLAG_ACTIVE) ) {
+        if ( ! flags.has(FLAG_ACTIVE) ) {
             revert Close_NotActive();
         }
 
@@ -528,7 +547,7 @@ contract PollManager is IERC165, IPollManager {
         params.flags = flags & ~FLAG_ACTIVE;
 
         // If proposal isn't hidden, remove from active list, to past list + emit events
-        if( 0 == (flags & FLAG_HIDDEN) )
+        if( ! flags.has(FLAG_HIDDEN) )
         {
             ACTIVE_PROPOSALS.remove(in_proposalId);
             s_pastProposalsIndex[in_proposalId] = PAST_PROPOSALS.length;
@@ -562,7 +581,7 @@ contract PollManager is IERC165, IPollManager {
         uint8 flags = params.flags;
 
         // If poll is still active, close it!
-        if( 0 != (flags & FLAG_ACTIVE) )
+        if( flags.has(FLAG_ACTIVE) )
         {
             close(in_proposalId);
         }
@@ -583,7 +602,7 @@ contract PollManager is IERC165, IPollManager {
         delete OWNERS[in_proposalId];
 
         // Remove proposal from past proposals list
-        if( 0 != (flags & FLAG_HIDDEN) )
+        if( ! flags.has(FLAG_HIDDEN) )
         {
             uint idx = s_pastProposalsIndex[in_proposalId];
             uint cnt = PAST_PROPOSALS.length;
@@ -607,7 +626,7 @@ contract PollManager is IERC165, IPollManager {
         Ballot storage ballot = s_ballots[in_proposalId];
 
         // Cannot get vote counts while poll is still active
-        if ( 0 != (params.flags & FLAG_ACTIVE) ) {
+        if ( params.flags.has(FLAG_ACTIVE) ) {
             revert Poll_StillActive();
         }
 
@@ -629,7 +648,7 @@ contract PollManager is IERC165, IPollManager {
 
         out_flags = params.flags;
 
-        if ( 0 != (out_flags & FLAG_ACTIVE) ) {
+        if ( out_flags.has(FLAG_ACTIVE) ) {
             revert Poll_StillActive();
         }
 
@@ -655,7 +674,7 @@ contract PollManager is IERC165, IPollManager {
 
         (flags, out_count, in_limit, ballot) = internal_paginateBallot(in_proposalId, in_offset, in_limit);
 
-        if ( 0 == (flags & FLAG_PUBLISH_VOTES) ) {
+        if ( ! flags.has(FLAG_PUBLISH_VOTES) ) {
             revert Poll_NotPublishingVotes();
         }
 
@@ -686,7 +705,7 @@ contract PollManager is IERC165, IPollManager {
 
         (flags, out_count, in_limit, ballot) = internal_paginateBallot(in_proposalId, in_offset, in_limit);
 
-        if ( 0 == (flags & FLAG_PUBLISH_VOTERS) ) {
+        if ( ! flags.has(FLAG_PUBLISH_VOTERS) ) {
             revert Poll_NotPublishingVoters();
         }
 

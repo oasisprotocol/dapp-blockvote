@@ -8,7 +8,7 @@
   "types": "./lib/cjs/index.d.ts",
   "engines": {
     "node": ">=18",
-    "pnpm": ">=8"
+    "pnpm": ">=9"
   },
   "files": [
     "lib",
