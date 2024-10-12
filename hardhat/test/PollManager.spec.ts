@@ -33,7 +33,16 @@ describe('PollManager', function () {
     acl_allowall = (await deployContract('AllowAllACL')) as AllowAllACL;
     acl_voterlist = (await deployContract('VoterAllowListACL')) as VoterAllowListACL;
     acl_tokenholder = (await deployContract('TokenHolderACL')) as TokenHolderACL;
-    gv = await deployContract('GaslessVoting');
+
+    const cde = await deployContract('CalldataEncryption');
+
+    gv = await (await ethers.getContractFactory('GaslessVoting', {
+      libraries: {
+        CalldataEncryption: await cde.getAddress()
+      }
+    })).deploy();
+    await gv.waitForDeployment();
+    console.log('  -', 'GaslessVoting', await gv.getAddress());
 
     ({ accountCache, acl_storageproof, headerCache } = await deployStorageProofStuff());
 
