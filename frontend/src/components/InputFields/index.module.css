@@ -80,6 +80,20 @@
 
 .textValue {
   width: 99%;
+  margin-left: 1px;
+
+  input {
+    padding: 12px 16px;
+    height: 48px;
+
+    background: #ffffff;
+    border: 1px solid #80848e;
+    border-radius: 8px;
+  }
+}
+
+.dateValue {
+  width: 99%;
 
   input {
     padding: 12px 16px;
@@ -101,7 +115,7 @@
 .boolValue {
   font-style: normal;
   font-weight: 400;
-  font-size: 13px;
+  font-size: 16px;
 
   input {
     width: 24px;
