@@ -208,9 +208,9 @@ contract GaslessVoting is IERC165, IGaslessVoter
             // XXX: there is a race condition here, if somebody creates a tx
             //      for voting, with a higher nonce, which is subsequently
             //      rejected by the contract.
-            uint64 nonce = kp.nonce + 1;
+            uint64 nonce = kp.nonce;
 
-            kp.nonce = nonce;
+            kp.nonce = nonce + 1;
 
             // NOTE: if the poll is hidden, this won't reveal the poll ID
             emit GasWithdrawTransaction(EIP155Signer.sign(
