@@ -202,8 +202,8 @@ describe('Cross-chain', function () {
 
   // Verifies that the RPC endpoints are archive nodes and can retrieve historic proofs
   it('Historic Proofs', async function () {
-    // Allow roughly 3 seconds per supported chain
-    this.timeout(Object.keys(chain_info).length * 1000 * 10);
+    // Allow roughly 30 seconds per supported chain
+    this.timeout(Object.keys(chain_info).length * 1000 * 300);
 
     for (const k of Object.keys(chain_info)) {
       const chainId = Number(k);
