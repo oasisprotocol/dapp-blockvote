@@ -275,8 +275,8 @@ async function detectGasRefundOnCompletion(
   receipt: ContractTransactionReceipt,
   pollManager: PollManager
 ) {
-  const iface = GaslessVoting__factory.createInterface()
-  const gvAddr = await pollManager.GASLESS_VOTER()
+  const iface = GaslessVoting__factory.createInterface();
+  const gvAddr = await pollManager.GASLESS_VOTER();
   for( const log of receipt.logs ) {
     if( log.address !== gvAddr ) {
       continue;
@@ -288,6 +288,9 @@ async function detectGasRefundOnCompletion(
     if( result && result.name === 'GasWithdrawTransaction' ) {
       const refundTx = await pollManager.runner?.provider?.broadcastTransaction(result.args[0]);
       console.log('refundTx', refundTx);
+      refundTx?.wait().then((receipt) => {
+        console.log('Refund tx completed, receipt:', receipt);
+      });
     }
   }
 }

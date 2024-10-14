@@ -3,7 +3,7 @@ import { ethers } from 'hardhat';
 import { signVotingRequest, RequestType } from '@oasisprotocol/blockvote-contracts';
 import { addProposal, deployContract } from './common';
 import { AllowAllACL, GaslessVoting, PollManager } from '../src/contracts';
-import { formatEther, parseEther } from 'ethers';
+import { formatEther, parseEther, Transaction } from 'ethers';
 
 describe('Gasless voting', () => {
   let pm: PollManager;
@@ -111,21 +111,23 @@ describe('Gasless voting', () => {
     // Close the poll, which will emit the withdraw transactions
     const closeTx = await pm.close(proposalId);
     const closeReceipt = await closeTx.wait();
-    let withdrawTransactions: string[] = [];
+    let withdrawTransactions: {addr:string;tx:string}[] = [];
     for (const log of closeReceipt!.logs) {
-      if (log.address != (await gv.getAddress())) {
+      const addr = await gv.getAddress();
+      if (log.address != addr) {
         continue;
       }
       const ld = gv.interface.parseLog({ data: log.data, topics: log.topics as string[] })!;
       if (ld.name == 'GasWithdrawTransaction') {
-        withdrawTransactions.push(ld.args[0]);
+        const tx = ld.args[0];
+        withdrawTransactions.push({addr, tx});
       }
     }
 
     // Then submit the withdrawal transactions
     console.log('      - Withdraw unused balance');
-    for (const wdTx of withdrawTransactions) {
-      const wdResponse = await ethers.provider.broadcastTransaction(wdTx);
+    for (const {addr,tx} of withdrawTransactions) {
+      const wdResponse = await ethers.provider.broadcastTransaction(tx);
       const wdReceipt = await wdResponse.wait();
       expect(wdReceipt?.status).eq(1);
     }
