@@ -35,7 +35,7 @@ type TooltipProps = Omit<Parameters<typeof Tooltip>[0], 'overlay' | 'children'> 
  * whitelists and blacklists of known good and bad components.
  */
 
-const knownGoodSimple = ['div', 'span', 'svg', 'input', 'a', 'abbr', 'h1', 'h2', 'h3', 'h4', 'img']
+const knownGoodSimple = ['div', 'span', 'svg', 'input', 'a', 'abbr', 'h1', 'h2', 'h3', 'h4', 'img', 'select']
 const knownGoodFunctions = ['Button']
 const knownWrappedFunctions = ['MarkdownBlock', 'OpenLockIcon', 'ClosedLockIcon', 'Icon']
 const knownGoodObjects = [forwardRef(() => undefined).$$typeof]
