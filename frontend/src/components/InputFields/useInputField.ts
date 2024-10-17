@@ -179,7 +179,7 @@ export type InputFieldControls<DataType> = Pick<
    */
   validate: (params: ValidationParams) => Promise<boolean>
   validationPending: boolean
-  validationStatusMessage: string | undefined
+  validationStatusMessage: MarkdownCode | undefined
   validatorProgress: number | undefined
   indicateValidationPending: boolean
   indicateValidationSuccess: boolean
@@ -303,7 +303,7 @@ export function useInputField<DataType>(
   const isEnabled = getVerdict(enabled, true)
 
   const [validatorProgress, setValidatorProgress] = useState<number>()
-  const [validationStatusMessage, setValidationStatusMessage] = useState<string | undefined>()
+  const [validationStatusMessage, setValidationStatusMessage] = useState<MarkdownCode | undefined>()
 
   const validatorControls: Pick<ValidatorControls, 'updateStatus'> = {
     updateStatus: ({ progress, message }) => {

@@ -57,7 +57,7 @@ export type AllMessages = Record<string, FieldMessage[]>
 
 export type ValidatorControls = {
   isStillFresh: () => boolean
-  updateStatus: (status: { message?: string; progress?: number }) => void
+  updateStatus: (status: { message?: MarkdownCode; progress?: number }) => void
 }
 
 export type SyncValidatorFunction<DataType> = (

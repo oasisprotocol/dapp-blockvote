@@ -6,8 +6,19 @@ import { Button } from '../Button'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
 
 export const ActionButton: FC<ActionControls<any>> = props => {
-  const { allMessages, size, color, variant, label, execute, isPending, enabled, whyDisabled, description } =
-    props
+  const {
+    allMessages,
+    size,
+    color,
+    variant,
+    label,
+    pendingLabel,
+    execute,
+    enabled,
+    whyDisabled,
+    description,
+    validationPending,
+  } = props
   const handleClick: MouseEventHandler = event => {
     event.stopPropagation()
     void execute()
@@ -21,10 +32,10 @@ export const ActionButton: FC<ActionControls<any>> = props => {
             size={size}
             color={color}
             onClick={handleClick}
-            pending={isPending}
-            disabled={!enabled}
+            pending={validationPending}
+            disabled={!enabled || validationPending}
           >
-            {label}
+            {validationPending ? (pendingLabel ?? label) : label}
           </Button>
         </MaybeWithTooltip>
       </WithValidation>

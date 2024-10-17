@@ -4,6 +4,7 @@ import { FieldMessageList } from './FieldMessageDisplay'
 import { FieldMessage } from './util'
 import { InputFieldControls } from './useInputField'
 import { MotionDiv } from '../Animations'
+import { MarkdownBlock } from '../Markdown'
 
 export const FieldAndValidationMessage: FC<
   Pick<InputFieldControls<any>, 'validationPending' | 'validationStatusMessage' | 'clearMessage'> & {
@@ -26,7 +27,7 @@ export const FieldAndValidationMessage: FC<
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, delay: 0 }}
           >
-            {validationStatusMessage}
+            <MarkdownBlock code={validationStatusMessage} />
           </MotionDiv>
         )}
       </AnimatePresence>

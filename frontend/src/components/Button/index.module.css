@@ -107,10 +107,10 @@
   cursor: not-allowed;
   background-color: var(--bright-gray);
   opacity: 0.5;
-}
 
-.buttonDisabled label {
-  cursor: not-allowed;
+  label {
+    cursor: not-allowed;
+  }
 }
 
 .fullWidth {

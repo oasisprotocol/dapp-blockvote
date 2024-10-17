@@ -109,7 +109,7 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
           <FieldMessageList messages={allMessages.root} onRemove={clearMessage} />
           {validationPending && pendingValidationIndex === undefined && (
             <div className={'niceLine'}>
-              {validationStatusMessage}
+              <MarkdownBlock code={validationStatusMessage} mainTag={'span'} />
               <SpinnerIcon width={24} height={24} spinning={true} />
             </div>
           )}
