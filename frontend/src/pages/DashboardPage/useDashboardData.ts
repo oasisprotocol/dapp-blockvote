@@ -6,6 +6,7 @@ import { useBooleanField, useOneOfField, useTextField } from '../../components/I
 import { useNavigate } from 'react-router-dom'
 import { dashboard, designDecisions } from '../../constants/config'
 import classes from './index.module.css'
+import { getPollPath } from '../../utils/path.utils'
 
 const FETCH_BATCH_SIZE = 100
 
@@ -241,7 +242,7 @@ export const useDashboardData = () => {
       const cards = allVisiblePollIds
       if (cards.length !== 1) return // We can only do this is there is exactly one matching card
       const pollId = Array.from(cards.values())[0]
-      navigate(`/polls/${pollId}`)
+      navigate(getPollPath(pollId))
     },
   })
 

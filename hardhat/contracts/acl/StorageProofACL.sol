@@ -25,7 +25,7 @@ contract StorageProofACL is IPollACL
 
     mapping(bytes32 => PollSettings) private s_polls;
 
-    StorageProof private storageProof;
+    StorageProof private immutable storageProof;
 
     function internal_id(address in_dao, bytes32 in_proposalId)
         internal pure
@@ -88,6 +88,10 @@ contract StorageProofACL is IPollACL
         external
     {
         delete s_polls[internal_id(msg.sender, in_proposalId)];
+    }
+
+    function onPollDestroyed(bytes32 in_proposalId) external {
+        // Do nothing
     }
 
     function canVoteOnPoll(

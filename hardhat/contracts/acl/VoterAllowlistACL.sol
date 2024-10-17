@@ -59,6 +59,10 @@ contract VoterAllowListACL is IPollACL
         delete eligibleVotersList[pid];
     }
 
+    function onPollDestroyed(bytes32 in_proposalId) external {
+        // Do nothing
+    }
+
     /// Is user allowed to vote on the poll?
     function canVoteOnPoll(address in_dao, bytes32 in_proposalId, address in_user, bytes calldata)
         external view

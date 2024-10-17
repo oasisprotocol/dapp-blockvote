@@ -27,6 +27,7 @@ import { AnimatePresence } from 'framer-motion'
 import { Button } from '../Button'
 import { MotionDiv } from '../Animations'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
+import { getPollPath } from '../../utils/path.utils'
 
 const Arrow: FC<{ className: string }> = ({ className }) => (
   <svg
@@ -172,7 +173,7 @@ export const PollCard: FC<{
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Link to={`/polls/${pollId}`} style={{ textDecoration: 'none' }}>
+          <Link to={getPollPath(pollId!)} style={{ textDecoration: 'none' }}>
             <div className={classes.pollCard}>
               <div className={classes.pollCardTop}>
                 {error && (

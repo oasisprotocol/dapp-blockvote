@@ -23,8 +23,6 @@ export interface ChainDefinition {
 }
 
 const INFURA_API_KEY = 'e9b08cc1b55b430494f6cf5259b2a560';
-const THIRDWEB_API_KEY = '6699629aefc73887e7f962c5438dddd1';
-const ALCHEMY_API_KEY = 'LTUd8wMSlbXxWBHpYyFE-WyOh2wud4Hb';
 
 // NOTE: many chains are defined in https://github.com/thirdweb-dev/js/tree/main/legacy_packages/chains/chains
 

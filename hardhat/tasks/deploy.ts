@@ -133,7 +133,7 @@ async function deploy_acls(
     setenv,
   );
 
-  return { addr_AllowAllACL };
+  return { addr_AllowAllACL, addr_VoterAllowListACL, addr_TokenHolderACL };
 }
 
 // Default DAO deployment, no permissions.
@@ -160,7 +160,7 @@ task('deploy')
     );
     const currentNetworkUrl = (currentNetwork as any).url;
     if (!env['VITE_APP_ROOT_URL']) {
-      setenv('VITE_APP_ROOT_URL', 'http://vote.oasis.io');
+      setenv('VITE_APP_ROOT_URL', 'https://vote.oasis.io');
     }
     setenv('VITE_NETWORK', String(hre.network.config.chainId!));
     if (!currentNetworkUrl) {
@@ -175,7 +175,7 @@ task('deploy')
     const addr_TestToken = await deployContract(
       hre,
       await hre.ethers.getContractFactory('TestToken'),
-      'VITE_CONTRACT_TESTTOKEN',
+      'CONTRACT_TESTTOKEN',
       env,
       setenv,
     );
@@ -186,15 +186,27 @@ task('deploy')
       await mint_tx.wait();
     }
 
+    const addr_CalldataEncryption = await deployContract(
+      hre,
+      await hre.ethers.getContractFactory('CalldataEncryption'),
+      'CONTRACT_LIB_CALLDATAENCRYPTION',
+      env,
+      setenv,
+    );
+
     const addr_GaslessVoting = await deployContract(
       hre,
-      await hre.ethers.getContractFactory('GaslessVoting'),
+      await hre.ethers.getContractFactory('GaslessVoting', {
+        libraries: {
+          CalldataEncryption: addr_CalldataEncryption,
+        }
+      }),
       'CONTRACT_GASLESSVOTING',
       env,
       setenv,
     );
 
-    const addr_PollManager = await deployContract(
+    await deployContract(
       hre,
       await hre.ethers.getContractFactory('PollManager'),
       'CONTRACT_POLLMANAGER',
@@ -206,4 +218,4 @@ task('deploy')
 
     // Set the default PollManager ACL, so frontend doesn't have to query contract
     await setenv('VITE_CONTRACT_POLLMANAGER_ACL', addr_AllowAllACL);
-  });
+});

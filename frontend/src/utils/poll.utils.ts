@@ -1,4 +1,12 @@
-import { AbiCoder, BytesLike, getAddress, getBytes, JsonRpcProvider, ParamType } from 'ethers'
+import {
+  AbiCoder,
+  BytesLike,
+  ContractTransactionReceipt,
+  getAddress,
+  getBytes,
+  JsonRpcProvider,
+  ParamType,
+} from 'ethers'
 
 // XXX: cborg module types can cause error:
 //    There are types at './dapp-sidedao/frontend/node_modules/cborg/types/cborg.d.ts',
@@ -21,6 +29,7 @@ import {
   NFTInfo,
   nftDetailsFromProvider,
   ContractType,
+  GaslessVoting__factory,
 } from '@oasisprotocol/blockvote-contracts'
 export type { ContractType, NftType } from '@oasisprotocol/blockvote-contracts'
 export { isToken } from '@oasisprotocol/blockvote-contracts'
@@ -262,28 +271,50 @@ export const createPoll = async (
   }
 }
 
-export const completePoll = async (eth: EthereumContext, pollManager: PollManager, proposalId: string) => {
-  await eth.switchNetwork() // ensure we're on the correct network first!
-  // console.log("Preparing complete tx...")
-
-  const tx = await pollManager.close(proposalId)
-  // console.log('Complete proposal tx', tx);
-
-  const receipt = await tx.wait()
-
-  if (receipt!.status != 1) throw new Error('Complete ballot tx failed')
+/**
+ * When a poll is closed or destroyed, it may emit signed transactions in events
+ * to return the gas subsidy to the poll owner. These must be broadcast back to
+ * the network for the refunds to be processed.
+ *
+ * @param receipt Receipt of the `close` or `destroy` transaction
+ * @param pollManager Instance of the poll manager
+ */
+async function detectGasRefundOnCompletion(receipt: ContractTransactionReceipt, pollManager: PollManager) {
+  const iface = GaslessVoting__factory.createInterface()
+  const gvAddr = await pollManager.GASLESS_VOTER()
+  for (const log of receipt.logs) {
+    if (log.address !== gvAddr) {
+      continue
+    }
+    const result = iface.parseLog({
+      topics: log.topics as string[],
+      data: log.data,
+    })
+    if (result && result.name === 'GasWithdrawTransaction') {
+      const refundTx = await pollManager.runner?.provider?.broadcastTransaction(result.args[0])
+      console.log('refundTx', refundTx)
+      refundTx?.wait().then(receipt => {
+        console.log('Refund tx completed, receipt:', receipt)
+      })
+    }
+  }
 }
 
+export const completePoll = async (eth: EthereumContext, pollManager: PollManager, proposalId: string) => {
+  await eth.switchNetwork() // ensure we're on the correct network first!
+  const tx = await pollManager.close(proposalId)
+  const receipt = await tx.wait()
+  if (!receipt || receipt!.status != 1) throw new Error('Complete ballot tx failed')
+  await detectGasRefundOnCompletion(receipt, pollManager)
+}
+
+// Destroying the poll will automatically close it first
 export const destroyPoll = async (eth: EthereumContext, pollManager: PollManager, proposalId: string) => {
   await eth.switchNetwork() // ensure we're on the correct network first!
-  // console.log("Preparing complete tx...")
-
   const tx = await pollManager.destroy(proposalId)
-  // console.log('Destroy proposal tx', tx);
-
   const receipt = await tx.wait()
-
-  if (receipt!.status != 1) throw new Error('Destroy poll tx failed')
+  if (!receipt || receipt!.status != 1) throw new Error('Destroy poll tx failed')
+  await detectGasRefundOnCompletion(receipt, pollManager)
 }
 
 export type PollPermissions = {

@@ -11,13 +11,17 @@ import { IPollACL } from "../interfaces/IPollACL.sol";
 import { IPollManager } from "../interfaces/IPollManager.sol";
 import { VotingRequest, IGaslessVoter } from "../interfaces/IGaslessVoter.sol";
 
+// TODO: upgrade to @oasisprotocol/sapphire-contracts 0.3.0
+import { CalldataEncryption } from "./CalldataEncryption.sol";
+
 /// Poll creators can subsidize voting on proposals
 contract GaslessVoting is IERC165, IGaslessVoter
 {
     struct EthereumKeypair {
         bytes32 gvid;
-        address addr;
         bytes32 secret;
+        address addr;
+        uint64 nonce;
     }
 
     struct PollSettings {
@@ -51,11 +55,14 @@ contract GaslessVoting is IERC165, IGaslessVoter
 
     // ------------------------------------------------------------------------
 
+    // Currently transactions cost 22143 or 22142 gas
+    uint64 private constant TRANSFER_GAS_COST = 22143;
+
     // EIP-712 parameters
-    bytes32 public constant EIP712_DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-    string public constant VOTINGREQUEST_TYPE = "VotingRequest(address voter,address dao,bytes32 proposalId,uint256 choiceId)";
-    bytes32 public constant VOTINGREQUEST_TYPEHASH = keccak256(bytes(VOTINGREQUEST_TYPE));
-    bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 private constant EIP712_DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+    string private constant VOTINGREQUEST_TYPE = "VotingRequest(address voter,address dao,bytes32 proposalId,uint256 choiceId)";
+    bytes32 private constant VOTINGREQUEST_TYPEHASH = keccak256(bytes(VOTINGREQUEST_TYPE));
+    bytes32 private immutable DOMAIN_SEPARATOR;
 
     // ------------------------------------------------------------------------
 
@@ -126,7 +133,7 @@ contract GaslessVoting is IERC165, IGaslessVoter
         PollSettings storage poll = s_polls[gvid];
 
         if( poll.dao != IPollManager(address(0)) ) {
-            require(false, "onPollCreated_409()"); // Poll already exists
+            revert onPollCreated_409(); // Poll already exists
         }
 
         poll.owner = in_creator;
@@ -142,7 +149,27 @@ contract GaslessVoting is IERC165, IGaslessVoter
 
     // ------------------------------------------------------------------------
 
+    function onPollDestroyed(bytes32 in_proposalId) external
+    {
+        bytes32 gvid = internal_gvid(msg.sender, in_proposalId);
+
+        PollSettings storage poll = s_polls[gvid];
+
+        for( uint i = 0; i < poll.keypairs.length; i++ )
+        {
+            EthereumKeypair storage kp = poll.keypairs[i];
+
+            delete s_addrToKeypair[kp.addr];
+        }
+
+        delete s_polls[gvid];
+    }
+
+    // ------------------------------------------------------------------------
+
     error onPollClosed_404();
+
+    event GasWithdrawTransaction( bytes signedTransaction );
 
     function onPollClosed(bytes32 in_proposalId)
         external
@@ -153,10 +180,53 @@ contract GaslessVoting is IERC165, IGaslessVoter
 
         // Poll must exist
         if( poll.dao == IPollManager(address(0)) ) {
-            require(false, "onPollClosed_404()");
+            revert onPollClosed_404();
         }
 
         poll.closed = true;
+
+        // Emit signed transactions to return unused funds back to the owner
+        EthereumKeypair[] storage keypairs = poll.keypairs;
+
+        uint n = keypairs.length;
+
+        for( uint i = 0; i < n; i++ )
+        {
+            EthereumKeypair storage kp = keypairs[i];
+
+            uint balance = payable(kp.addr).balance;
+
+            uint withdrawTxCost = (tx.gasprice * TRANSFER_GAS_COST);
+
+            // Account must have sufficient funds to perform the transaction
+            if( withdrawTxCost > balance ) {
+                continue;
+            }
+
+            // The last submitted transaction before poll closing provides
+            // the nonce for automatic submission upon transaction closing
+            // XXX: there is a race condition here, if somebody creates a tx
+            //      for voting, with a higher nonce, which is subsequently
+            //      rejected by the contract.
+            uint64 nonce = kp.nonce;
+
+            // NOTE: nonce
+            kp.nonce = nonce + 1;
+
+            // NOTE: if the poll is hidden, this won't reveal the poll ID
+            emit GasWithdrawTransaction(EIP155Signer.sign(
+                kp.addr,
+                kp.secret,
+                EIP155Signer.EthTx({
+                    nonce: nonce,
+                    gasPrice: tx.gasprice,
+                    gasLimit: TRANSFER_GAS_COST,
+                    to: poll.owner,
+                    value: balance - withdrawTxCost,
+                    chainId: block.chainid,
+                    data: ""
+                })));
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -171,11 +241,11 @@ contract GaslessVoting is IERC165, IGaslessVoter
         address signerAddr;
         bytes32 signerSecret;
 
+        // It's necessary to mock this in Hardhat, otherwise poll creation fails
         if( block.chainid != 1337 ) {
             (signerAddr, signerSecret) = EthereumUtils.generateKeypair();
         }
         else {
-            // Mock this on hardhat
             signerSecret = keccak256(abi.encodePacked(msg.sender, block.number));
             signerAddr = address(bytes20(keccak256(abi.encodePacked(signerSecret))));
         }
@@ -185,7 +255,8 @@ contract GaslessVoting is IERC165, IGaslessVoter
         keypairs.push(EthereumKeypair({
             gvid: in_gvid,
             addr: signerAddr,
-            secret: signerSecret
+            secret: signerSecret,
+            nonce: 0
         }));
 
         s_addrToKeypair[signerAddr] = KeypairIndex(in_gvid, keypairs.length - 1);
@@ -196,6 +267,7 @@ contract GaslessVoting is IERC165, IGaslessVoter
     // ------------------------------------------------------------------------
 
     error internal_randomKeypair_404();
+    error internal_randomKeypair_418();
 
     /**
      * Select a random keypair
@@ -206,14 +278,14 @@ contract GaslessVoting is IERC165, IGaslessVoter
     {
         EthereumKeypair[] storage keypairs = s_polls[in_gvid].keypairs;
         if( keypairs.length == 0 ) {
-            require(false, "internal_randomKeypair_404()");
+            revert internal_randomKeypair_404();
         }
 
         uint16 x = uint16(bytes2(Sapphire.randomBytes(2, "")));
 
         uint n = keypairs.length;
 
-        require( n > 0 );
+        require( n > 0, internal_randomKeypair_418() );
 
         return keypairs[x % keypairs.length];
     }
@@ -240,12 +312,12 @@ contract GaslessVoting is IERC165, IGaslessVoter
         KeypairIndex memory idx = s_addrToKeypair[addr];
 
         if( idx.gvid != in_gvid ) {
-            require(false, "internal_keypairForGvidByAddress_403()");
+            revert internal_keypairForGvidByAddress_403();
         }
 
         // Keypair must exist for address
         if( idx.gvid == 0 ) {
-            require(false, "internal_keypairForGvidByAddress_404()");
+            revert internal_keypairForGvidByAddress_404();
         }
 
         PollSettings storage poll = s_polls[idx.gvid];
@@ -269,7 +341,7 @@ contract GaslessVoting is IERC165, IGaslessVoter
 
         // Keypair must exist for address
         if( idx.gvid == 0 ) {
-            require(false, "internal_keypairByAddress_404()");
+            revert internal_keypairByAddress_404();
         }
 
         out_poll = s_polls[idx.gvid];
@@ -291,7 +363,7 @@ contract GaslessVoting is IERC165, IGaslessVoter
 
         // poll must be owned by sender
         if( s_polls[gvid].owner != msg.sender ) {
-            require(false, "addKeypair_403()");
+            revert addKeypair_403();
         }
 
         address addr = internal_addKeypair(gvid);
@@ -306,19 +378,8 @@ contract GaslessVoting is IERC165, IGaslessVoter
     error makeVoteTransaction_404();
     error makeVoteTransaction_401();
     error makeVoteTransaction_403();
+    error makeVoteTransaction_nonce();
 
-    /**
-     * Validate a users voting request, then give them a signed transaction to commit the vote
-     *
-     * The signed transaction invokes `submitEncryptedVote`, which is unmodifiable by the user
-     * and hides all info about what their address is, which ballot they were voting on and
-     * what their vote was.
-     *
-     * @param in_gasPrice Which gas price to use when submitting transaction
-     * @param in_request Voting Request
-     * @param in_rsv EIP-712 signature for request
-     * @return output Signed transaction to submit via eth_sendRawTransaction
-     */
     function makeVoteTransaction(
         address in_addr,
         uint64 in_nonce,
@@ -335,13 +396,13 @@ contract GaslessVoting is IERC165, IGaslessVoter
         IPollManager dao = s_polls[gvid].dao;
 
         if( dao == IPollManager(address(0)) ) {
-            require(false, "makeVoteTransaction_404()");
+            revert makeVoteTransaction_404();
         }
 
         // User must be able to vote on the poll
         // so we don't waste gas submitting invalid transactions
         if( 0 == dao.canVoteOnPoll(in_request.proposalId, in_request.voter, in_data) ) {
-            require(false, "makeVoteTransaction_401()");
+            revert makeVoteTransaction_401();
         }
 
         // Validate EIP-712 signed voting request
@@ -356,33 +417,15 @@ contract GaslessVoting is IERC165, IGaslessVoter
                 in_request.choiceId
             ))
         ));
+
         if( in_request.voter != ecrecover(requestDigest, uint8(in_rsv.v), in_rsv.r, in_rsv.s) ) {
-            require(false, "makeVoteTransaction_403()");
+            revert makeVoteTransaction_403();
         }
 
-        // Encrypt request to authenticate it when we're invoked again
-        bytes32 ciphertextNonce = keccak256(abi.encodePacked(encryptionSecret, requestDigest));
-
-        bytes memory plaintext = abi.encode(
-                            dao,
-                            abi.encodeCall(
-                                dao.proxy,
-                                (in_request.voter,
-                                 in_request.proposalId,
-                                 in_request.choiceId,
-                                 in_data)
-                            ));
-
         // Choose a random keypair to submit the transaction from
-        EthereumKeypair memory kp = internal_keypairForGvidByAddress(gvid, in_addr);
+        EthereumKeypair storage kp = internal_keypairForGvidByAddress(gvid, in_addr);
 
-        bytes memory ciphertext = Sapphire.encrypt(
-                        encryptionSecret,
-                        ciphertextNonce,
-                        plaintext,
-                        "");
-
-        bytes memory innerCall = abi.encodeCall(this.proxy, (ciphertextNonce, ciphertext));
+        require( in_nonce >= kp.nonce, makeVoteTransaction_nonce() );
 
         // Return signed transaction invoking 'submitEncryptedVote'
         return EIP155Signer.sign(
@@ -395,7 +438,19 @@ contract GaslessVoting is IERC165, IGaslessVoter
                 to: address(this),
                 value: 0,
                 chainId: block.chainid,
-                data: innerCall
+                data: CalldataEncryption.encryptCallData(
+                    abi.encodeCall(
+                        this.proxyDirect,
+                        (
+                            in_nonce,
+                            address(dao),
+                            abi.encodeCall(
+                                dao.proxy,
+                                (in_request.voter,
+                                in_request.proposalId,
+                                in_request.choiceId,
+                                in_data)
+                            ))))
             }));
     }
 
@@ -404,25 +459,23 @@ contract GaslessVoting is IERC165, IGaslessVoter
     error proxy_403();
     error proxy_500();
 
-    function proxy(bytes32 ciphertextNonce, bytes memory ciphertext)
+    function proxyDirect(uint64 nonce, address addr, bytes memory subcall_data)
         public payable
     {
         EthereumKeypair storage kp;
 
         (,kp) = internal_keypairByAddress(msg.sender);
         if( kp.gvid == 0 ) {    // Keypair must exist and belong to the sender
-            require(false, "proxy_403()");
+            revert proxy_403();
         }
 
-        bytes memory plaintext = Sapphire.decrypt(encryptionSecret, ciphertextNonce, ciphertext, "");
-
-        (address addr, bytes memory subcall_data) = abi.decode(plaintext, (address, bytes));
+        kp.nonce = nonce + 1;
 
         (bool success, bytes memory reason) = addr.call{value: msg.value}(subcall_data);
 
         if( ! success )
         {
-            require( reason.length > 0, "proxy_500()" );
+            require( reason.length > 0, proxy_500() );
 
             if( reason.length > 0) {
                 /// @solidity memory-safe-assembly
@@ -447,6 +500,7 @@ contract GaslessVoting is IERC165, IGaslessVoter
         uint64 in_nonce,
         uint256 in_amount,
         uint256 in_gasPrice,
+        uint64 in_gasLimit,
         SignatureRSV calldata rsv
     )
         external view
@@ -486,7 +540,7 @@ contract GaslessVoting is IERC165, IGaslessVoter
         return EIP155Signer.sign(kp.addr, kp.secret, EIP155Signer.EthTx({
             nonce: in_nonce,
             gasPrice: in_gasPrice,
-            gasLimit: 250000,
+            gasLimit: in_gasLimit,
             to: owner,
             value: in_amount,
             data: "",
