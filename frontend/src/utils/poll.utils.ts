@@ -243,7 +243,7 @@ export const createPoll = async (
   console.log('params are', proposalParams)
   console.log('ACL data is', aclData)
 
-  updateStatus('Calling signer')
+  updateStatus('Waiting for signer...')
   const createProposalTx = await pollManager.create(proposalParams, aclData, {
     value: subsidizeAmount ?? 0n,
   })

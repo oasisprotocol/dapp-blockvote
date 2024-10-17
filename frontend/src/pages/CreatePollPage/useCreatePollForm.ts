@@ -13,6 +13,7 @@ import {
   useTextArrayField,
   useTextField,
   useAction,
+  InputFieldProps,
 } from '../../components/InputFields'
 import { createPoll as doCreatePoll, parseEther, CreatePollProps } from '../../utils/poll.utils'
 import { useContracts } from '../../hooks/useContracts'
@@ -174,6 +175,12 @@ export const useCreatePollForm = () => {
     amountOfSubsidy.setValue(cost.toString())
   }, [gasFree.value, currentAcl, numberOfExpectedVoters.value])
 
+  const [isFrozen, setIsFrozen] = useState(false)
+
+  const freezingOptions: Partial<InputFieldProps<any>> = {
+    enabled: isFrozen ? deny('Too late to change your mind; we are already creating the poll') : true,
+  }
+
   const resultDisplayType = useOneOfField({
     name: 'resultDisplayType',
     label: 'Type of result display',
@@ -199,6 +206,7 @@ export const useCreatePollForm = () => {
         description: 'Everyone can see who voted for what.',
       },
     ],
+    ...freezingOptions,
     hideDisabledChoices: designDecisions.hideDisabledSelectOptions,
   } as const)
 
@@ -238,6 +246,7 @@ export const useCreatePollForm = () => {
   const hasCompletionDate = useBooleanField({
     name: 'hasCompletionDate',
     label: 'Fixed completion date',
+    ...freezingOptions,
     onValueChange: value => {
       if (value) pollCompletionDate.setValue(new Date(Date.now() + 1000 * 3600))
     },
@@ -249,6 +258,7 @@ export const useCreatePollForm = () => {
     name: 'pollCompletionDate',
     label: `Poll completion date (Time zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone})`,
     visible: hasCompletionDate.value,
+    ...freezingOptions,
     validateOnChange: true,
     showValidationPending: false,
     validators: value => {
@@ -315,6 +325,7 @@ export const useCreatePollForm = () => {
     size: 'small',
     color: 'secondary',
     variant: 'outline',
+    enabled: isFrozen ? deny("Don't go anywhere, we are creating the poll now...") : true,
     action: () => {
       setStep(process[stepIndex - 1])
       setStepIndex(stepIndex - 1)
@@ -340,6 +351,7 @@ export const useCreatePollForm = () => {
   const createPoll = useAction({
     name: 'createPoll',
     label: 'Create poll',
+    pendingLabel: 'Creating poll ...',
     visible: stepIndex === numberOfSteps - 1,
     enabled: hasErrorsOnCurrentPage
       ? deny('Please fix the errors above first!')
@@ -349,10 +361,11 @@ export const useCreatePollForm = () => {
           ? deny('Waiting for wallet')
           : true,
     size: 'small',
-    action: async () => {
-      const logger = (message?: string | undefined) => creationStatus.setValue(message ?? '')
+    action: async context => {
+      const { setPendingMessage: logger } = context
 
       try {
+        setIsFrozen(true)
         const aclConfigValues = currentAclConfig.values
         const {
           data: aclData,
@@ -380,7 +393,7 @@ export const useCreatePollForm = () => {
         // console.log('Will create poll with props:', pollProps)
 
         const newId = await doCreatePoll(daoSigner!, eth.state.address!, pollProps, logger)
-
+        setIsFrozen(false)
         if (newId) {
         navigate(getPollPath(newId))
         }
@@ -390,6 +403,8 @@ export const useCreatePollForm = () => {
           exString = 'Signer refused to sign transaction.'
         }
         logger(`Failed to create poll: ${exString}`)
+        setIsFrozen(false)
+        throw Error('Failed to create poll')
       }
     },
   })
