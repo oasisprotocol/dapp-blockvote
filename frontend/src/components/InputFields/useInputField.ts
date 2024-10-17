@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  AllProblems,
+  AllMessages,
   ValidatorControls,
   CoupledData,
   Decision,
@@ -9,10 +9,11 @@ import {
   getReason,
   getVerdict,
   invertDecision,
-  ProblemAtLocation,
+  MessageAtLocation,
   SingleOrArray,
   ValidatorFunction,
-  wrapProblem,
+  wrapValidatorOutput,
+  checkMessagesForProblems,
 } from './util'
 import { MarkdownCode } from '../../types'
 
@@ -163,25 +164,38 @@ export type InputFieldControls<DataType> = Pick<
   whyDisabled?: MarkdownCode
   containerClassName?: string
   value: DataType
+  cleanValue: DataType
   setValue: (value: DataType) => void
   reset: () => void
-  allProblems: AllProblems
+  allMessages: AllMessages
   hasProblems: boolean
   isValidated: boolean
+
+  /**
+   * Run validation on this field.
+   *
+   * Will update field messages.
+   * Returns true if there is an error.
+   */
   validate: (params: ValidationParams) => Promise<boolean>
   validationPending: boolean
-  validationStatusMessage: string | undefined
+  validationStatusMessage: MarkdownCode | undefined
   validatorProgress: number | undefined
   indicateValidationPending: boolean
   indicateValidationSuccess: boolean
-  clearProblem: (id: string) => void
-  clearProblemsAt: (location: string) => void
-  clearAllProblems: () => void
+  clearMessage: (id: string) => void
+  clearMessagesAt: (location: string) => void
+  clearAllMessages: () => void
 }
 
 type DataTypeTools<DataType> = {
   isEmpty: (data: DataType) => boolean
   isEqual: (data1: DataType, data2: DataType) => boolean
+}
+
+export const noType: DataTypeTools<void> = {
+  isEmpty: () => true,
+  isEqual: () => true,
 }
 
 const calculateVisible = (controls: Pick<InputFieldProps<any>, 'name' | 'hidden' | 'visible'>): boolean => {
@@ -261,20 +275,22 @@ export function useInputField<DataType>(
 
   const [value, setValue] = useState<DataType>(initialValue)
   const cleanValue = cleanUp ? cleanUp(value) : value
-  const [problems, setProblems] = useState<ProblemAtLocation[]>([])
-  const allProblems = useMemo(() => {
-    const problemTree: AllProblems = {}
-    problems.forEach(problem => {
-      const { location } = problem
-      let bucket = problemTree[location]
-      if (!bucket) bucket = problemTree[location] = []
-      const localProblem: ProblemAtLocation = { ...problem }
-      delete (localProblem as any).location
-      bucket.push(localProblem)
+  const [messages, setMessages] = useState<MessageAtLocation[]>([])
+  const allMessages = useMemo(() => {
+    const messageTree: AllMessages = {}
+    messages.forEach(message => {
+      const { location } = message
+      let bucket = messageTree[location]
+      if (!bucket) bucket = messageTree[location] = []
+      const localMessage: MessageAtLocation = { ...message }
+      delete (localMessage as any).location
+      bucket.push(localMessage)
     })
-    return problemTree
-  }, [problems])
-  const hasProblems = Object.keys(allProblems).some(key => allProblems[key].length)
+    return messageTree
+  }, [messages])
+  const hasProblems = Object.keys(allMessages).some(
+    key => checkMessagesForProblems(allMessages[key]).hasError,
+  )
   const [isValidated, setIsValidated] = useState(false)
   const [lastValidatedData, setLastValidatedData] = useState<DataType | undefined>()
   const [validationPending, setValidationPending] = useState(false)
@@ -287,7 +303,7 @@ export function useInputField<DataType>(
   const isEnabled = getVerdict(enabled, true)
 
   const [validatorProgress, setValidatorProgress] = useState<number>()
-  const [validationStatusMessage, setValidationStatusMessage] = useState<string | undefined>()
+  const [validationStatusMessage, setValidationStatusMessage] = useState<MarkdownCode | undefined>()
 
   const validatorControls: Pick<ValidatorControls, 'updateStatus'> = {
     updateStatus: ({ progress, message }) => {
@@ -297,6 +313,10 @@ export function useInputField<DataType>(
   }
 
   const validate = async (params: ValidationParams): Promise<boolean> => {
+    if (!visible) {
+      // We don't care about hidden fields
+      return false
+    }
     const { forceChange = false, reason, isStillFresh } = params
     const wasOK = isValidated && !hasProblems
 
@@ -311,13 +331,13 @@ export function useInputField<DataType>(
       setValue(cleanValue)
     }
 
-    // Let's start to collect the new problems
-    const currentProblems: ProblemAtLocation[] = []
+    // Let's start to collect the new messages
+    const currentMessages: MessageAtLocation[] = []
     let hasError = false
 
     // If it's required but empty, that's already an error
     if (required && isEmpty(cleanValue) && reason !== 'change') {
-      currentProblems.push(wrapProblem(requiredMessage, 'root', 'error')!)
+      currentMessages.push(wrapValidatorOutput(requiredMessage, 'root', 'error')!)
       hasError = true
     }
 
@@ -336,44 +356,45 @@ export function useInputField<DataType>(
             : await validator(cleanValue, { ...validatorControls, isStillFresh }, params.reason) // Execute the current validators
 
         getAsArray(validatorReport) // Maybe we have a single report, maybe an array. Receive it as an array.
-          .map(report => wrapProblem(report, 'root', 'error')) // Wrap single strings to proper reports
-          .forEach(problem => {
+          .map(report => wrapValidatorOutput(report, 'root', 'error')) // Wrap single strings to proper reports
+          .forEach(message => {
             // Go through all the reports
-            if (!problem) return
-            if (problem.level === 'error') hasError = true
-            currentProblems.push(problem)
+            if (!message) return
+            if (message.type === 'error') hasError = true
+            currentMessages.push(message)
           })
       } catch (validatorError) {
         console.log('Error while running validator', validatorError)
-        currentProblems.push(wrapProblem(`Error while checking: ${validatorError}`, 'root', 'error')!)
+        currentMessages.push(wrapValidatorOutput(`Error while checking: ${validatorError}`, 'root', 'error')!)
       }
     }
 
     if (isStillFresh()) {
-      setProblems(currentProblems)
+      setMessages(currentMessages)
       setValidationPending(false)
       setIsValidated(true)
       setLastValidatedData(cleanValue)
 
       // Do we have any actual errors?
-      return !currentProblems.some(problem => problem.level === 'error')
+      return currentMessages.some(message => message.type === 'error')
     } else {
       return false
     }
   }
 
-  const clearProblem = (message: string) => {
-    setProblems(problems.filter(p => p.message !== message))
+  const clearMessage = (message: string) => {
+    const oldLength = messages.length
+    setMessages(messages.filter(p => p.text !== message || p.type === 'info'))
+    if (messages.length !== oldLength) setIsValidated(false)
+  }
+
+  const clearMessagesAt = (location: string): void => {
+    setMessages(messages.filter(p => p.location !== location))
     setIsValidated(false)
   }
 
-  const clearProblemsAt = (location: string): void => {
-    setProblems(problems.filter(p => p.location !== location))
-    setIsValidated(false)
-  }
-
-  const clearAllProblems = () => {
-    setProblems([])
+  const clearAllMessages = () => {
+    setMessages([])
     setIsValidated(false)
   }
 
@@ -386,7 +407,7 @@ export function useInputField<DataType>(
       if (validateOnChange && !isEmpty(cleanValue)) {
         void validate({ reason: 'change', isStillFresh: () => fresh })
       } else {
-        clearAllProblems()
+        clearAllMessages()
         setIsValidated(false)
       }
     }
@@ -406,14 +427,15 @@ export function useInputField<DataType>(
     compact,
     placeholder,
     value,
+    cleanValue,
     setValue,
     reset,
-    allProblems,
+    allMessages: allMessages,
     hasProblems,
     isValidated,
-    clearProblem,
-    clearProblemsAt,
-    clearAllProblems,
+    clearMessage,
+    clearMessagesAt,
+    clearAllMessages,
     indicateValidationSuccess: showValidationSuccess,
     indicateValidationPending: showValidationPending,
     validate,

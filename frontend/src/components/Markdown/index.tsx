@@ -18,10 +18,13 @@ export const renderComponents: Components = {
   },
 }
 
+export type TagName = keyof IntrinsicElements
+
 type MarkdownBlockProps = {
   code: MarkdownCode | undefined
-  mainTag?: keyof IntrinsicElements
+  mainTag?: TagName
 }
+
 export const MarkdownBlock: FC<MarkdownBlockProps> = ({ code, mainTag }) => {
   if (!code) return undefined
   return (
@@ -31,4 +34,6 @@ export const MarkdownBlock: FC<MarkdownBlockProps> = ({ code, mainTag }) => {
   )
 }
 
-export const renderMarkdown = (markdown: MarkdownCode | undefined) => <MarkdownBlock code={markdown} />
+export const renderMarkdown = (markdown: MarkdownCode | undefined, tagName: TagName = 'span') => (
+  <MarkdownBlock code={markdown} mainTag={tagName} />
+)
