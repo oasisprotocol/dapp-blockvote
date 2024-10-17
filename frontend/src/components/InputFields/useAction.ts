@@ -5,7 +5,7 @@ import { FieldLike } from './validation'
 import { MarkdownCode } from '../../types'
 
 type ActionContext = {
-  setPendingMessage: (message: MarkdownCode) => void
+  setPendingMessage: (message: MarkdownCode | undefined) => void
   addMessage: (message: MarkdownCode) => string
   removeMessage: (signature: string) => void
 }
@@ -24,6 +24,7 @@ export type ActionProps<ReturnData = void> = Omit<
   | 'showValidationSuccess'
   | 'onValueChange'
 > & {
+  pendingLabel?: string
   size?: ButtonSize
   color?: ButtonColor
   variant?: ButtonVariant
@@ -36,27 +37,36 @@ export type ActionControls<ReturnData> = FieldLike &
     'value' | 'setValue' | 'reset' | 'hasProblems' | 'validate' | 'validatorProgress'
   > &
   Pick<ActionProps, 'color' | 'variant' | 'size'> & {
-    isPending: boolean
-    statusMessage: MarkdownCode | undefined
+    pendingLabel: string | undefined
     execute: () => Promise<ReturnData>
   }
 
 export function useAction<ReturnType>(props: ActionProps<ReturnType>): ActionControls<ReturnType> {
-  const { color, variant, size, action } = props
-  const controls = useInputField('action', { ...props, initialValue: undefined }, noType)
+  const { color, variant, size, action, pendingLabel, name } = props
+  const controls = useInputField(
+    'action',
+    { ...props, initialValue: undefined, showValidationPending: false },
+    noType,
+  )
 
   const [isPending, setIsPending] = useState(false)
-  const [statusMessage, setStatusMessage] = useState<MarkdownCode>('')
+  const [statusMessage, setStatusMessage] = useState<MarkdownCode | undefined>()
 
   const execute = async (): Promise<ReturnType> => {
     setIsPending(true)
-    const result = await action({
-      setPendingMessage: message => setStatusMessage(message),
-      addMessage: _message => 'x',
-      removeMessage: _signature => {},
-    })
-    setIsPending(false)
-    return result
+    try {
+      const result = await action({
+        setPendingMessage: message => setStatusMessage(message),
+        addMessage: _message => 'x',
+        removeMessage: _signature => {},
+      })
+      return result
+    } catch (error) {
+      console.log('Error while executing action', name, ':', error)
+      throw error
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return {
@@ -64,8 +74,9 @@ export function useAction<ReturnType>(props: ActionProps<ReturnType>): ActionCon
     color,
     variant,
     size,
-    isPending,
-    statusMessage,
+    pendingLabel,
+    validationPending: isPending,
+    validationStatusMessage: statusMessage,
     execute,
   }
 }
