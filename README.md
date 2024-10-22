@@ -1,9 +1,9 @@
-# Side DAO: Private Sidekick for DAOs
+# Oasis Blockvote: Private Sidekick for DAOs
 
-This is a dApp for running ad-hoc unofficial opinion polls for DAO members.
+This is a dApp for running ad-hoc unofficial opinion polls for DAO members, or any other group.
 
 The app is a fork of the [Oasis Demo Voting App],
-which in in turn a fork of the [OPL Secret Ballot].
+which is in turn a fork of the [OPL Secret Ballot].
 
 [Oasis Demo Voting App]: https://github.com/oasisprotocol/demo-voting/tree/CedarMist/per-dao-stuff
 [OPL Secret Ballot]: https://github.com/oasisprotocol/playground/tree/main/opl-secret-ballot
@@ -134,39 +134,37 @@ npx hardhat deploy --network sapphire
 
 [Sapphire Localnet]: https://github.com/oasisprotocol/oasis-web3-gateway/pkgs/container/sapphire-dev
 
-## Demo frontend
+## Frontend
 
 After compiling the backend, updating `.env.development` with the corresponding
 DAO address and chain ID, move to the `frontend` folder to compile and
-Hot-Reload demo frontend for Development:
+Hot-Reload frontend for Development:
 
 ```sh
 pnpm dev
 ```
 
-Additionally, we need a [Pinata JWT key] to access the IPFS pinning
-service where we store details of the ballots to.
+This will start the React app, using the contracts deployed to Sapphire Localnet.
 
-```yaml
-VITE_PINATA_JWT=
-```
-
-Start Vue app:
+Or, you can do:
 
 ```sh
-pnpm dev
+pnpm dev-staging
 ```
 
-Navigate to http://localhost:5173, and you should be able to create a new poll.
+This will also start the React app, but it will use the contracts deployed to Sapphire teestnet.
 
-You can use one of the deployed test accounts and associated private key with
+Whichever backend you want to you, after starting the React app,
+navigate to http://localhost:5173, and you should be able to create a new poll.
+
+
+If running against localnet, 
+you can use one of the deployed test accounts and associated private key with
 MetaMask. If you use the same MetaMask accounts on fresh local networks, don't
 forget to *clear your account's activity* each time or manually specify the
 correct account nonce.
 
-[Pinata JWT key]: https://docs.pinata.cloud/docs/getting-started#2-generate-your-api-keys
-
-### Demo frontend Deployment
+### Frontend Deployment
 
 You can build assets for deployment by running:
 
