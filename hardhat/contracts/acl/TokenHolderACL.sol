@@ -44,6 +44,10 @@ contract TokenHolderACL is IPollACL
         delete polls[pid];
     }
 
+    function onPollDestroyed(bytes32 in_proposalId) external {
+        // Do nothing
+    }
+
     /// Does user hold a non-zero balance of the token required to vote?
     function canVoteOnPoll(address in_dao, bytes32 in_proposalId, address in_user, bytes calldata in_data)
         external view

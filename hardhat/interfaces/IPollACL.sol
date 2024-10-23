@@ -17,6 +17,8 @@ interface IPollACL is IERC165 {
 
     function onPollClosed(bytes32 proposalId) external;
 
+    function onPollDestroyed(bytes32 proposalId) external;
+
     // Is a given user eligible voter for the given poll.
     // Returns the weight of their votes, 0 if they're not allowed to vote!
     function canVoteOnPoll(address dao, bytes32 proposalId, address user, bytes calldata data) external view returns(uint);

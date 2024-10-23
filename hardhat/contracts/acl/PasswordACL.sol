@@ -34,8 +34,12 @@ contract PasswordACL is IPollACL
         s_passwords[id] = keccak256(in_password);
     }
 
-    function onPollClosed(bytes32 in_proposalId)
-        external
+    function onPollClosed(bytes32 in_proposalId) external
+    {
+        // Do nothing
+    }
+
+    function onPollDestroyed(bytes32 in_proposalId) external
     {
         bytes32 id = internal_id(msg.sender, in_proposalId);
 

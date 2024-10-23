@@ -8,6 +8,15 @@ on:
 
 jobs:
   build-test:
+    services:
+      sapphire-localnet-ci:
+        image: ghcr.io/oasisprotocol/sapphire-localnet:latest
+        ports:
+          - 8545:8545
+        options: >-
+          --rm
+          --health-cmd="test -f /CONTAINER_READY"
+          --health-start-period=90s
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -31,7 +40,7 @@ jobs:
         run: pnpm build
       - name: Test backend
         working-directory: hardhat
-        run: pnpm test
+        run: pnpm hardhat --network sapphire-localnet test
       - name: Build frontend
         working-directory: frontend
         run: pnpm build
