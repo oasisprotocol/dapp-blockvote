@@ -85,7 +85,7 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
     removeItemLabel,
     removeItem,
     allMessages,
-    clearMessage,
+    clearErrorMessage,
     enabled,
     whyDisabled,
     validationPending,
@@ -106,7 +106,7 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
     <WithVisibility field={props}>
       <WithLabelAndDescription field={props}>
         <div className={classes.textArrayValue}>
-          <FieldMessageList messages={allMessages.root} onRemove={clearMessage} />
+          <FieldMessageList messages={allMessages.root} onRemove={clearErrorMessage} />
           {validationPending && pendingValidationIndex === undefined && (
             <div className={'niceLine'}>
               <MarkdownBlock code={validationStatusMessage} mainTag={'span'} />
@@ -161,7 +161,7 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
                         isValidated && !hasProblems,
                       validationStatusMessage:
                         pendingValidationIndex === index ? validationStatusMessage : undefined,
-                      clearMessage,
+                      clearErrorMessage: clearErrorMessage,
                     }}
                     messages={itemMessages}
                     extraWidget={

@@ -7,15 +7,15 @@ import { MotionDiv } from '../Animations'
 import { MarkdownBlock } from '../Markdown'
 
 export const FieldAndValidationMessage: FC<
-  Pick<InputFieldControls<any>, 'validationPending' | 'validationStatusMessage' | 'clearMessage'> & {
+  Pick<InputFieldControls<any>, 'validationPending' | 'validationStatusMessage' | 'clearErrorMessage'> & {
     messages: FieldMessage[]
   }
 > = props => {
-  const { validationPending, validationStatusMessage, messages, clearMessage } = props
+  const { validationPending, validationStatusMessage, messages, clearErrorMessage } = props
 
   return (
     <>
-      <FieldMessageList messages={messages} onRemove={clearMessage} />
+      <FieldMessageList messages={messages} onRemove={clearErrorMessage} />
       <AnimatePresence mode={'wait'}>
         {!!validationStatusMessage && validationPending && (
           <MotionDiv

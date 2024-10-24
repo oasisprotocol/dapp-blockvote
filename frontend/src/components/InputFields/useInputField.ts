@@ -183,9 +183,16 @@ export type InputFieldControls<DataType> = Pick<
   validatorProgress: number | undefined
   indicateValidationPending: boolean
   indicateValidationSuccess: boolean
-  clearMessage: (id: string) => void
+  clearErrorMessage: (id: string) => void
   clearMessagesAt: (location: string) => void
   clearAllMessages: () => void
+}
+
+export type InputFieldControlsInternal<DataType> = InputFieldControls<DataType> & {
+  /**
+   * This is for internal use only. Don't use from an application.
+   */
+  addMessage: (message: MessageAtLocation) => void
 }
 
 type DataTypeTools<DataType> = {
@@ -249,11 +256,11 @@ export const calculateEnabled = (
   }
 }
 
-export function useInputField<DataType>(
+export function useInputFieldInternal<DataType>(
   type: string,
   props: InputFieldProps<DataType>,
   dataTypeControl: DataTypeTools<DataType>,
-): InputFieldControls<DataType> {
+): InputFieldControlsInternal<DataType> {
   const {
     name,
     label,
@@ -276,6 +283,17 @@ export function useInputField<DataType>(
   const [value, setValue] = useState<DataType>(initialValue)
   const cleanValue = cleanUp ? cleanUp(value) : value
   const [messages, setMessages] = useState<MessageAtLocation[]>([])
+
+  let latestMessages: MessageAtLocation[] = [...messages]
+  const addMessage = (message: MessageAtLocation) => {
+    // We need to use a local variable to handle situations when addMessage is called multiple times
+    // within a rendering cycle, i.e. before the state is updated.
+    // If we didn't do this, we would always tty to add to the original array of messages,
+    // thus constantly losing all previous additions within the cycle.
+    latestMessages.push(message)
+    setMessages([...latestMessages])
+  }
+
   const allMessages = useMemo(() => {
     const messageTree: AllMessages = {}
     messages.forEach(message => {
@@ -382,18 +400,21 @@ export function useInputField<DataType>(
     }
   }
 
-  const clearMessage = (message: string) => {
-    const oldLength = messages.length
-    setMessages(messages.filter(p => p.text !== message || p.type === 'info'))
+  const clearErrorMessage = (message: string) => {
+    const oldLength = latestMessages.length
+    latestMessages = latestMessages.filter(p => p.text !== message || p.type === 'info')
+    setMessages(latestMessages)
     if (messages.length !== oldLength) setIsValidated(false)
   }
 
   const clearMessagesAt = (location: string): void => {
-    setMessages(messages.filter(p => p.location !== location))
+    latestMessages = latestMessages.filter(p => p.location !== location)
+    setMessages(latestMessages)
     setIsValidated(false)
   }
 
   const clearAllMessages = () => {
+    latestMessages = []
     setMessages([])
     setIsValidated(false)
   }
@@ -433,7 +454,7 @@ export function useInputField<DataType>(
     allMessages: allMessages,
     hasProblems,
     isValidated,
-    clearMessage,
+    clearErrorMessage,
     clearMessagesAt,
     clearAllMessages,
     indicateValidationSuccess: showValidationSuccess,
@@ -446,5 +467,14 @@ export function useInputField<DataType>(
     enabled: isEnabled,
     whyDisabled: isEnabled ? undefined : getReason(enabled),
     containerClassName,
+    addMessage,
   }
+}
+
+export function useInputField<DataType>(
+  type: string,
+  props: InputFieldProps<DataType>,
+  dataTypeControl: DataTypeTools<DataType>,
+): InputFieldControls<DataType> {
+  return useInputFieldInternal(type, props, dataTypeControl)
 }

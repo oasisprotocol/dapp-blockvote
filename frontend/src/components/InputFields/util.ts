@@ -11,7 +11,7 @@ export type FieldMessage = {
 export type MessageMaybeAtLocation = FieldMessage & { location?: string }
 export type MessageAtLocation = FieldMessage & { location: string }
 
-export type ValidatorOutput = MessageMaybeAtLocation | string | undefined
+export type ValidatorOutput = MessageMaybeAtLocation | MarkdownCode | undefined
 
 export const wrapValidatorOutput = (
   output: ValidatorOutput,

@@ -1,4 +1,4 @@
-import { InputFieldControls, InputFieldProps, noType, useInputField } from './useInputField'
+import { InputFieldControls, InputFieldProps, noType, useInputFieldInternal } from './useInputField'
 import { ButtonColor, ButtonSize, ButtonVariant } from '../Button'
 import { useState } from 'react'
 import { FieldLike } from './validation'
@@ -6,8 +6,9 @@ import { MarkdownCode } from '../../types'
 
 type ActionContext = {
   setPendingMessage: (message: MarkdownCode | undefined) => void
-  addMessage: (message: MarkdownCode) => string
-  removeMessage: (signature: string) => void
+  log: (message: MarkdownCode, ...optionalParams: any[]) => void
+  warn: (message: MarkdownCode, ...optionalParams: any[]) => void
+  error: (message: MarkdownCode, ...optionalParams: any[]) => void
 }
 
 export type ActionProps<ReturnData = void> = Omit<
@@ -28,7 +29,7 @@ export type ActionProps<ReturnData = void> = Omit<
   size?: ButtonSize
   color?: ButtonColor
   variant?: ButtonVariant
-  action: (context: ActionContext) => ReturnData
+  action: (action: ActionContext) => ReturnData
 }
 
 export type ActionControls<ReturnData> = FieldLike &
@@ -42,8 +43,8 @@ export type ActionControls<ReturnData> = FieldLike &
   }
 
 export function useAction<ReturnType>(props: ActionProps<ReturnType>): ActionControls<ReturnType> {
-  const { color, variant, size, action, pendingLabel, name } = props
-  const controls = useInputField(
+  const { color, variant, size, action, pendingLabel } = props
+  const controls = useInputFieldInternal(
     'action',
     { ...props, initialValue: undefined, showValidationPending: false },
     noType,
@@ -54,15 +55,32 @@ export function useAction<ReturnType>(props: ActionProps<ReturnType>): ActionCon
 
   const execute = async (): Promise<ReturnType> => {
     setIsPending(true)
+    const context: ActionContext = {
+      setPendingMessage: message => setStatusMessage(message),
+      log: (message, optionalParams) =>
+        controls.addMessage({
+          text: [message, ...(optionalParams || [])].join(' '),
+          type: 'info',
+          location: 'root',
+        }),
+      warn: (message, optionalParams) =>
+        controls.addMessage({
+          text: [message, ...(optionalParams || [])].join(' '),
+          type: 'warning',
+          location: 'root',
+        }),
+      error: (message, optionalParams) =>
+        controls.addMessage({
+          text: [message, ...(optionalParams || [])].join(' '),
+          type: 'error',
+          location: 'root',
+        }),
+    }
     try {
-      const result = await action({
-        setPendingMessage: message => setStatusMessage(message),
-        addMessage: _message => 'x',
-        removeMessage: _signature => {},
-      })
-      return result
-    } catch (error) {
-      console.log('Error while executing action', name, ':', error)
+      controls.clearAllMessages()
+      return await action(context)
+    } catch (error: any) {
+      context.error(error)
       throw error
     } finally {
       setIsPending(false)

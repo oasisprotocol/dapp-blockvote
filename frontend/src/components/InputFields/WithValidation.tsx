@@ -15,7 +15,7 @@ export const WithValidation: FC<
       | 'validationPending'
       | 'isValidated'
       | 'validationStatusMessage'
-      | 'clearMessage'
+      | 'clearErrorMessage'
       | 'compact'
       | 'label'
     >

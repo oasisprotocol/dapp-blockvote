@@ -43,7 +43,7 @@ export const FieldMessageList: FC<{
   messages: FieldMessage[] | undefined
   onRemove: Remover
 }> = ({ messages = [], onRemove }) => (
-  <AnimatePresence mode={'wait'} initial={false}>
+  <AnimatePresence mode={'sync'} initial={false}>
     {messages.map(p => (
       <FieldMessageDisplay key={p.signature ?? (p.text as string)} message={p} onRemove={onRemove} />
     ))}

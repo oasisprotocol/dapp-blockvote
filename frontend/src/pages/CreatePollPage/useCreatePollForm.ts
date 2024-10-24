@@ -361,8 +361,8 @@ export const useCreatePollForm = () => {
           ? deny('Waiting for wallet')
           : true,
     size: 'small',
-    action: async context => {
-      const { setPendingMessage: logger } = context
+    action: async action => {
+      const { setPendingMessage: logger } = action
 
       try {
         setIsFrozen(true)
@@ -404,7 +404,7 @@ export const useCreatePollForm = () => {
         }
         logger(`Failed to create poll: ${exString}`)
         setIsFrozen(false)
-        throw Error('Failed to create poll')
+        throw Error(`Failed to create poll: ${exString}`)
       }
     },
   })
