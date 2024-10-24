@@ -1,10 +1,11 @@
 import { InputFieldControls, InputFieldProps, useInputField } from './useInputField'
 import { getAsArray, SingleOrArray } from './util'
 import { ReactNode } from 'react'
+import { renderMarkdown, TagName } from '../Markdown'
 
 export type FormatterFunction<DataType> = (rawValue: DataType) => string
 
-export type RendererFunction<DataType> = (rawValue: DataType) => ReactNode
+export type RendererFunction<DataType> = (value: DataType | string, tagName: string) => ReactNode
 
 export type LabelProps<DataType = string> = Pick<
   InputFieldProps<DataType>,
@@ -20,8 +21,28 @@ export type LabelProps<DataType = string> = Pick<
   | 'validateOnChange'
   | 'showValidationSuccess'
 > & {
+  /**
+   * Which HTML tag should contain this label?
+   *
+   * The default is <snap>
+   */
+  tagName?: TagName
+
+  /**
+   * What extra classes should we apply to the field's div?
+   */
   classnames?: SingleOrArray<string>
-  formatter?: FormatterFunction<string>
+
+  /**
+   * Optional string transformation to ally to the content before rendering
+   */
+  formatter?: FormatterFunction<DataType>
+
+  /**
+   * Optional render function to use to get the HTML content from the (formatted) string.
+   *
+   * My default, de render as MarkDown
+   */
   renderer?: RendererFunction<string>
 }
 
@@ -30,12 +51,14 @@ export type LabelControls<DataType> = Omit<
   'placeholder' | 'enabled' | 'whyDisabled'
 > & {
   classnames: string[]
-  formatter: FormatterFunction<string> | undefined
-  renderer: RendererFunction<string> | undefined
+  renderedContent: ReactNode
 }
 
-export function useLabel<DataType = string>(props: LabelProps<DataType>): LabelControls<DataType> {
-  const { classnames = [], formatter, renderer } = props
+export function useLabel<DataType extends string = string>(
+  props: LabelProps<DataType>,
+): LabelControls<DataType> {
+  const { classnames = [], formatter, tagName = 'span' } = props
+  const { renderer = (value, tagName: TagName) => renderMarkdown(value, tagName) } = props
 
   const controls = useInputField(
     'label',
@@ -48,10 +71,12 @@ export function useLabel<DataType = string>(props: LabelProps<DataType>): LabelC
     },
   )
 
+  const formattedValue = formatter ? formatter(controls.value) : controls.value
+  const renderedContent = renderer(formattedValue, tagName)
+
   return {
     ...controls,
-    formatter,
-    renderer,
     classnames: getAsArray(classnames),
+    renderedContent,
   }
 }

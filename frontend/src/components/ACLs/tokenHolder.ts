@@ -1,5 +1,5 @@
 import { CheckPermissionResults, defineACL } from './common'
-import { DecisionWithReason, denyWithReason, useLabel, useOneOfField, useTextField } from '../InputFields'
+import { DecisionWithReason, denyWithReason, useOneOfField, useTextField } from '../InputFields'
 import { abiEncode, getLocalContractDetails, isValidAddress } from '../../utils/poll.utils'
 import {
   configuredExplorerUrl,
@@ -9,7 +9,6 @@ import {
 } from '../../constants/config'
 import { StringUtils } from '../../utils/string.utils'
 import { FLAG_WEIGHT_LOG10, FLAG_WEIGHT_ONE } from '../../types'
-import { renderMarkdown } from '../Markdown'
 import { getLink } from '../../utils/markdown.utils'
 
 export const tokenHolder = defineACL({
@@ -34,35 +33,20 @@ export const tokenHolder = defineACL({
           if (!details) {
             return "Can't find token details!"
           }
-          console.log('Details are', details)
-          tokenName.setValue(details.name ?? StringUtils.truncateAddress(value))
-          tokenSymbol.setValue(details.symbol ?? '(none)')
+          const tokenUrl = configuredExplorerUrl
+            ? StringUtils.getAccountUrl(configuredExplorerUrl, contractAddress.value)
+            : undefined
+          return [
+            {
+              type: 'info',
+              text: `**Selected token:** ${getLink({ label: details.name ?? StringUtils.truncateAddress(value), href: tokenUrl })}`,
+            },
+            { type: 'info', text: `**Symbol:** ${details.symbol ?? '(none)'}` },
+          ]
         },
       ],
       validateOnChange: true,
       showValidationSuccess: true,
-    })
-
-    const tokenUrl = configuredExplorerUrl
-      ? StringUtils.getAccountUrl(configuredExplorerUrl, contractAddress.value)
-      : undefined
-
-    const hasValidSapphireTokenAddress =
-      contractAddress.visible && contractAddress.isValidated && !contractAddress.hasProblems
-
-    const tokenName = useLabel({
-      name: 'tokenName',
-      visible: hasValidSapphireTokenAddress,
-      label: 'Selected token:',
-      initialValue: '',
-      renderer: name => renderMarkdown(getLink({ label: name, href: tokenUrl })),
-    })
-
-    const tokenSymbol = useLabel({
-      name: 'tokenSymbol',
-      visible: hasValidSapphireTokenAddress,
-      label: 'Symbol:',
-      initialValue: '',
     })
 
     const voteWeighting = useOneOfField({
@@ -99,7 +83,7 @@ export const tokenHolder = defineACL({
     }
 
     return {
-      fields: [contractAddress, [tokenName, tokenSymbol], voteWeighting],
+      fields: [contractAddress, voteWeighting],
       values: {
         tokenAddress: contractAddress.value,
         flags: weightToFlags(voteWeighting.value),

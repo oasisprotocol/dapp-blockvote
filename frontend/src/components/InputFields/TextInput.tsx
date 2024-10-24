@@ -7,7 +7,7 @@ import { WithVisibility } from './WithVisibility'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
 
 export const TextInput: FC<TextFieldControls> = props => {
-  const { name, value, placeholder, setValue, allProblems, enabled, whyDisabled, autoFocus, onEnter } = props
+  const { name, value, placeholder, setValue, allMessages, enabled, whyDisabled, autoFocus, onEnter } = props
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => setValue(event.target.value),
     [setValue],
@@ -25,7 +25,7 @@ export const TextInput: FC<TextFieldControls> = props => {
   return (
     <WithVisibility field={props}>
       <WithLabelAndDescription field={props}>
-        <WithValidation field={props} problems={allProblems.root} fieldClasses={[classes.textValue]}>
+        <WithValidation field={props} messages={allMessages.root} fieldClasses={[classes.textValue]}>
           <MaybeWithTooltip overlay={whyDisabled}>
             <input
               name={name}

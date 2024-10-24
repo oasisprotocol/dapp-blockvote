@@ -2,8 +2,8 @@ import React, { FC, useCallback } from 'react'
 import { TextArrayControls } from './useTextArrayField'
 import classes from './index.module.css'
 import { StringUtils } from '../../utils/string.utils'
-import { ProblemList } from './ProblemDisplay'
-import { checkProblems } from './util'
+import { FieldMessageList } from './FieldMessageDisplay'
+import { checkMessagesForProblems } from './util'
 import { SpinnerIcon } from '../icons/SpinnerIcon'
 import { AnimatePresence } from 'framer-motion'
 import { WithVisibility } from './WithVisibility'
@@ -28,7 +28,7 @@ const TrashIcon: FC<{
         <svg width="14" height="19" viewBox="0 0 14 19" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
             d="M1 16.5C1 17.6 1.9 18.5 3 18.5H11C12.1 18.5 13 17.6 13 16.5V4.5H1V16.5ZM14 1.5H10.5L9.5 0.5H4.5L3.5 1.5H0V3.5H14V1.5Z"
-            fill="#323232"
+            fill={enabled ? '#323232' : 'gray'}
           />
         </svg>
       </div>
@@ -36,7 +36,7 @@ const TrashIcon: FC<{
   )
 }
 
-const AddIcon: FC<{
+const AddItem: FC<{
   label: MarkdownCode
   add: () => void
   enabled?: boolean
@@ -46,13 +46,16 @@ const AddIcon: FC<{
     if (enabled) add()
   }, [add])
   return (
-    <MaybeWithTooltip overlay={overlay}>
-      <div className={StringUtils.clsx('niceLine', classes.addIcon)} onClick={handleClick}>
+    <div
+      className={StringUtils.clsx('niceLine', classes.addIcon, enabled ? undefined : classes.addIconDisabled)}
+      onClick={handleClick}
+    >
+      <MaybeWithTooltip overlay={overlay}>
         <svg width="28" height="25" viewBox="0 0 28 25" fill="none" xmlns="http://www.w3.org/2000/svg">
           <g clipPath="url(#clip0_2028_18630)">
             <path
               d="M12 2.5C6.48 2.5 2 6.98 2 12.5C2 18.02 6.48 22.5 12 22.5C17.52 22.5 22 18.02 22 12.5C22 6.98 17.52 2.5 12 2.5ZM17 13.5L13 13.5L13 17.5H11L11 13.5L7 13.5L7 11.5H11L11 7.5H13L13 11.5H17V13.5Z"
-              fill="#130FFF"
+              fill={enabled ? '#130FFF' : 'gray'}
             />
           </g>
           <defs>
@@ -61,9 +64,11 @@ const AddIcon: FC<{
             </clipPath>
           </defs>
         </svg>
-        <MarkdownBlock code={label} />
-      </div>
-    </MaybeWithTooltip>
+      </MaybeWithTooltip>
+      <MaybeWithTooltip overlay={overlay}>
+        <MarkdownBlock code={label} mainTag={'span'} />
+      </MaybeWithTooltip>
+    </div>
   )
 }
 
@@ -79,8 +84,8 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
     addItem,
     removeItemLabel,
     removeItem,
-    allProblems,
-    clearProblem,
+    allMessages,
+    clearErrorMessage,
     enabled,
     whyDisabled,
     validationPending,
@@ -101,17 +106,17 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
     <WithVisibility field={props}>
       <WithLabelAndDescription field={props}>
         <div className={classes.textArrayValue}>
-          <ProblemList problems={allProblems.root} onRemove={clearProblem} />
+          <FieldMessageList messages={allMessages.root} onRemove={clearErrorMessage} />
           {validationPending && pendingValidationIndex === undefined && (
             <div className={'niceLine'}>
-              {validationStatusMessage}
+              <MarkdownBlock code={validationStatusMessage} mainTag={'span'} />
               <SpinnerIcon width={24} height={24} spinning={true} />
             </div>
           )}
           <AnimatePresence initial={false}>
             {value.map((value, index) => {
-              const itemProblems = allProblems[`value-${index}`] || []
-              const { hasError, hasWarning } = checkProblems(itemProblems)
+              const itemMessages = allMessages[`value-${index}`] || []
+              const { hasError, hasWarning } = checkMessagesForProblems(itemMessages)
 
               return (
                 // <WithVisibility
@@ -156,9 +161,9 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
                         isValidated && !hasProblems,
                       validationStatusMessage:
                         pendingValidationIndex === index ? validationStatusMessage : undefined,
-                      clearProblem,
+                      clearErrorMessage: clearErrorMessage,
                     }}
-                    problems={itemProblems}
+                    messages={itemMessages}
                     extraWidget={
                       canRemoveItem(index) ? (
                         <TrashIcon
@@ -187,9 +192,7 @@ export const TextArrayInput: FC<TextArrayControls> = props => {
             })}
           </AnimatePresence>
           {canAddItem && (
-            <MaybeWithTooltip overlay={whyDisabled}>
-              <AddIcon label={addItemLabel} add={addItem} enabled={enabled} />
-            </MaybeWithTooltip>
+            <AddItem label={addItemLabel} add={addItem} enabled={enabled} overlay={whyDisabled} />
           )}
         </div>
       </WithLabelAndDescription>
