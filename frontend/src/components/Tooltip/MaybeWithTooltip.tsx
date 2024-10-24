@@ -57,8 +57,8 @@ const needsWrapping = (content: Content): boolean => {
         result = !knownGoodFunctions.includes(subType)
         if (result && !knownWrappedFunctions.includes(subType)) {
           console.log('Do I really need to wrap function', subType, '?')
-        } else {
-          console.log('Not wrapping function', subType)
+          // } else {
+          // console.log('Not wrapping function', subType)
         }
         return result
       case 'object':
