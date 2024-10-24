@@ -25,6 +25,9 @@ import { designDecisions, MIN_COMPLETION_TIME_MINUTES, nativeTokenName } from '.
 import { useNavigate } from 'react-router-dom'
 import { acls } from '../../components/ACLs'
 import { getPollPath } from '../../utils/path.utils'
+import { useEthereum } from '../../hooks/useEthereum'
+import { StringUtils } from '../../utils/string.utils'
+import { getLink } from '../../utils/markdown.utils'
 
 // The steps / pages of the wizard
 const stepTitles = {
@@ -45,7 +48,7 @@ const expectedRanges = {
 } as const
 
 export const useCreatePollForm = () => {
-  // const eth = useEthereum()
+  const { explorerBaseUrl } = useEthereum()
   const { eth, pollManagerWithSigner: daoSigner } = useContracts()
 
   const [step, setStep] = useState<CreationStep>('basics')
@@ -292,12 +295,6 @@ export const useCreatePollForm = () => {
     }
   }, [hasCompletionDate.value, hasValidCompletionDate, now])
 
-  const creationStatus = useLabel<string>({
-    name: 'creationStatus',
-    label: '',
-    initialValue: '',
-  })
-
   const stepFields: Record<CreationStep, FieldConfiguration> = {
     basics: [question, description, answers, customCSS],
     permission: [
@@ -314,18 +311,16 @@ export const useCreatePollForm = () => {
       hasCompletionDate,
       pollCompletionDate,
       pollCompletionLabel,
-      creationStatus,
     ],
   }
 
   const goToPreviousStep = useAction({
     name: 'previousStep',
     label: 'Back',
-    visible: stepIndex > 0,
+    visible: stepIndex > 0 && !isFrozen,
     size: 'small',
     color: 'secondary',
     variant: 'outline',
-    enabled: isFrozen ? deny("Don't go anywhere, we are creating the poll now...") : true,
     action: () => {
       setStep(process[stepIndex - 1])
       setStepIndex(stepIndex - 1)
@@ -388,6 +383,7 @@ export const useCreatePollForm = () => {
           publishVotes: resultDisplayType.value === 'percentages_and_votes',
           publishVoters: resultDisplayType.value === 'percentages_and_voters',
           completionTime: hasCompletionDate.value ? pollCompletionDate.value : undefined,
+          explorerBaseUrl,
         }
 
         // console.log('Will create poll with props:', pollProps)
@@ -395,14 +391,19 @@ export const useCreatePollForm = () => {
         const newId = await doCreatePoll(daoSigner!, eth.state.address!, pollProps, logger)
         setIsFrozen(false)
         if (newId) {
-        navigate(getPollPath(newId))
+          navigate(getPollPath(newId))
         }
       } catch (ex) {
         let exString = `${ex}`
         if (exString.startsWith('Error: user rejected action')) {
           exString = 'Signer refused to sign transaction.'
+        } else if (exString.startsWith('Error: transaction execution reverted')) {
+          const txHash = (ex as any).receipt.hash
+          const txUrl = explorerBaseUrl ? StringUtils.getTransactionUrl(explorerBaseUrl, txHash) : undefined
+          const txLink = getLink({ href: txUrl, label: 'transaction' })
+          exString = `the ${txLink} has been reverted.`
         }
-        logger(`Failed to create poll: ${exString}`)
+        console.log(ex)
         setIsFrozen(false)
         throw Error(`Failed to create poll: ${exString}`)
       }

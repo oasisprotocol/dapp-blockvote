@@ -48,6 +48,8 @@ import { DecisionWithReason, denyWithReason } from '../components/InputFields'
 import { FetcherFetchOptions } from './StoredLRUCache'
 import { findACLForOptions } from '../components/ACLs'
 import { VITE_NETWORK_NUMBER } from '../constants/config'
+import { getLink } from './markdown.utils'
+import { StringUtils } from './string.utils'
 
 export { parseEther } from 'ethers'
 
@@ -157,6 +159,7 @@ export type CreatePollProps = {
   publishVotes: boolean
   publishVoters: boolean
   completionTime: Date | undefined
+  explorerBaseUrl: string | undefined
 }
 
 const CURRENT_ENCODING_VERSION = 0
@@ -199,7 +202,7 @@ export const createPoll = async (
   pollManager: PollManager,
   creator: string,
   props: CreatePollProps,
-  updateStatus: (message: string) => void,
+  updateStatus: (message: MarkdownCode) => void,
 ) => {
   const {
     question,
@@ -214,6 +217,7 @@ export const createPoll = async (
     publishVotes,
     publishVoters,
     completionTime,
+    explorerBaseUrl,
   } = props
 
   updateStatus('Compiling data')
@@ -250,14 +254,23 @@ export const createPoll = async (
 
   console.log('TX created.', createProposalTx)
 
+  const url = explorerBaseUrl
+    ? StringUtils.getTransactionUrl(explorerBaseUrl, createProposalTx.hash)
+    : undefined
+
+  const txLink = getLink({
+    href: url,
+    label: 'transaction',
+  })
+
   console.log('doCreatePoll: creating proposal tx', createProposalTx.hash)
 
-  updateStatus('Sending transaction')
+  updateStatus(`Sending ${txLink} ...`)
 
   const receipt = (await createProposalTx.wait())!
   if (receipt.status !== 1) {
     console.log('Receipt is', receipt)
-    throw new Error('createProposal tx receipt reported failure.')
+    throw new Error(`createProposal ${txLink} receipt reported failure.`)
   }
   updateStatus('Created poll')
   if (isHidden) {
