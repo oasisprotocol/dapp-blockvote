@@ -22,6 +22,7 @@ import { useProposalFromChain } from '../../hooks/useProposalFromChain'
 import { useNavigate } from 'react-router-dom'
 import { isPollActive, shouldPublishVoters, shouldPublishVotes } from '../../types'
 import classes from './index.module.css'
+import { showGaslessPossible } from '../../components/icons/GasRequiredIcon'
 
 export const usePollData = (pollId: string) => {
   const navigate = useNavigate()
@@ -155,6 +156,12 @@ export const usePollData = (pollId: string) => {
             button. This will open your wallet, and let you confirm the connection, and also point your wallet
             to the ${configuredNetworkName} network. Ensure you have enough ${nativeTokenName} for any
             transaction fees.`,
+  })
+
+  const gaslessLabel = useLabel<boolean | undefined>({
+    name: 'gaslessIndicator',
+    value: gaslessPossible,
+    renderer: showGaslessPossible,
   })
 
   const voteAction = useAction({
@@ -511,7 +518,7 @@ export const usePollData = (pollId: string) => {
     permissionsPending,
     checkPermissions,
     gaslessEnabled,
-    gaslessPossible,
+    gaslessLabel,
     gvAddresses,
     gvBalances,
 

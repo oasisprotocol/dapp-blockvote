@@ -2,8 +2,6 @@ import { FC, useCallback } from 'react'
 import classes from './index.module.css'
 import { Button } from '../../components/Button'
 import { PollData } from './hook'
-import { GasRequiredIcon } from '../../components/icons/GasRequiredIcon'
-import { NoGasRequiredIcon } from '../../components/icons/NoGasRequiredIcon'
 import { abbrAddr } from '../../utils/crypto.demo'
 import { formatEther, parseEther } from 'ethers'
 import { ConnectWallet } from '../../components/ConnectWallet'
@@ -28,7 +26,7 @@ export const ActivePoll: FC<PollData> = ({
   canSelect,
   setSelectedChoice,
   gaslessEnabled,
-  gaslessPossible,
+  gaslessLabel,
   gvAddresses,
   gvBalances,
   voteAction,
@@ -163,21 +161,11 @@ export const ActivePoll: FC<PollData> = ({
           </>
         )
       )}
-      <div className={classes.buttons}>
-        {hasWallet && getVerdict(canAclVote, false) && !isPastDue && (
-          <div className={'niceLine'}>
-            {gaslessPossible ? (
-              designDecisions.hideGaslessIndicator ? undefined : (
-                <NoGasRequiredIcon />
-              )
-            ) : (
-              <GasRequiredIcon />
-            )}
-          </div>
-        )}
-        <InputFieldGroup fields={[[voteAction, completePoll, destroyPoll]]} expandHorizontally={false} />
-        {!hasWallet && !isPastDue && <ConnectWallet mobileSticky={false} buttonSize={'small'} />}
-      </div>
+      <InputFieldGroup
+        fields={[[gaslessLabel, voteAction, completePoll, destroyPoll]]}
+        expandHorizontally={false}
+      />
+      {!hasWallet && !isPastDue && <ConnectWallet mobileSticky={false} buttonSize={'small'} />}
       {isMine && gaslessEnabled && hasWallet && (
         <div>
           <h4>Gasless voting enabled:</h4>

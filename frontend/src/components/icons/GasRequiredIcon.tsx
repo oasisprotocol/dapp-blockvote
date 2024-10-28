@@ -1,5 +1,7 @@
 import { FC } from 'react'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
+import { designDecisions } from '../../constants/config'
+import { NoGasRequiredIcon } from './NoGasRequiredIcon'
 
 export const GasRequiredIcon: FC = () => {
   return (
@@ -13,3 +15,12 @@ export const GasRequiredIcon: FC = () => {
     </MaybeWithTooltip>
   )
 }
+
+export const showGaslessPossible = (gaslessPossible: boolean | undefined) =>
+  gaslessPossible ? (
+    designDecisions.hideGaslessIndicator ? undefined : (
+      <NoGasRequiredIcon />
+    )
+  ) : (
+    <GasRequiredIcon />
+  )

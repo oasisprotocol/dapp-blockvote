@@ -4,9 +4,7 @@ import { ReactNode } from 'react'
 import { renderMarkdown, TagName } from '../Markdown'
 import { MarkdownCode } from '../../types'
 
-export type FormatterFunction<DataType> = (rawValue: DataType) => string
-
-export type RendererFunction<DataType> = (value: DataType | string, tagName: string) => ReactNode
+export type RendererFunction<DataType> = (value: DataType, tagName: string) => ReactNode
 
 export type LabelProps<DataType = MarkdownCode> = Pick<
   InputFieldProps<DataType>,
@@ -35,16 +33,12 @@ export type LabelProps<DataType = MarkdownCode> = Pick<
   classnames?: SingleOrArray<string>
 
   /**
-   * Optional string transformation to ally to the content before rendering
-   */
-  formatter?: FormatterFunction<DataType>
-
-  /**
    * Optional render function to use to get the HTML content from the (formatted) string.
    *
-   * My default, de render as MarkDown
+   * My default, we render as MarkDown. If markdown rendering is not appropriate
+   * (for example. you want images) please provide a render function.
    */
-  renderer?: RendererFunction<string>
+  renderer?: RendererFunction<DataType>
 
   /**
    * The current value to display
@@ -60,11 +54,14 @@ export type LabelControls<DataType> = Omit<
   renderedContent: ReactNode
 }
 
-export function useLabel<DataType extends string = string>(
-  props: LabelProps<DataType>,
-): LabelControls<DataType> {
-  const { classnames = [], formatter, tagName = 'span', value } = props
-  const { renderer = (value, tagName: TagName) => renderMarkdown(value, tagName) } = props
+export function useLabel<DataType = MarkdownCode>(props: LabelProps<DataType>): LabelControls<DataType> {
+  const {
+    classnames = [],
+    // formatter,
+    tagName = 'span',
+    value,
+  } = props
+  const { renderer = (value, tagName: TagName) => renderMarkdown(value as any, tagName) } = props
 
   const controls = useInputField(
     'label',
@@ -78,8 +75,7 @@ export function useLabel<DataType extends string = string>(
     },
   )
 
-  const formattedValue = formatter ? formatter(value) : value
-  const renderedContent = renderer(formattedValue, tagName)
+  const renderedContent = renderer(value, tagName)
 
   return {
     ...controls,
