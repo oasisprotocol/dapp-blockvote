@@ -83,7 +83,7 @@ export const usePollData = (pollId: string) => {
   const remainingTimeLabel = useLabel({
     name: 'remainingTime',
     visible: !!remainingTimeString,
-    initialValue: remainingTimeString ?? '',
+    value: remainingTimeString ?? '',
     tagName: 'h4',
     expandHorizontally: false,
   })
@@ -91,18 +91,16 @@ export const usePollData = (pollId: string) => {
   const publishVotesLabel = useLabel({
     name: 'publishVotes',
     visible: shouldPublishVotes(poll?.proposal.params),
-    initialValue: 'Votes will be made public when the poll is completed.',
+    value: 'Votes will be made public when the poll is completed.',
     tagName: 'div',
   })
 
   const publishVotersLabel = useLabel({
     name: 'publishVoters',
     visible: shouldPublishVoters(poll?.proposal.params),
-    initialValue: 'The addresses of the voters will be made public when the poll is completed.',
+    value: 'The addresses of the voters will be made public when the poll is completed.',
     tagName: 'div',
   })
-
-  useEffect(() => remainingTimeLabel.setValue(remainingTimeString ?? ''), [remainingTimeString])
 
   const isPastDue = !!remainingTime?.isPastDue
 
@@ -147,9 +145,9 @@ export const usePollData = (pollId: string) => {
     name: 'walletLabel',
     visible: !isPastDue && !hasWallet && !isDemo,
     classnames: classes.needWallet,
-    initialValue:
+    value:
       !isHomeChain && userAddress !== ZeroAddress
-        ? `To vote on this poll, please point your wallet to the ${configuredNetworkName}</b> by clicking
+        ? `To vote on this poll, please point your wallet to the **${configuredNetworkName}** by clicking
     the "Switch Network" button. This will open your wallet, and let you confirm that you
   want to connect to the ${configuredNetworkName}. Ensure you have enough ${nativeTokenName} for any
     transaction fees.`
@@ -172,30 +170,12 @@ export const usePollData = (pollId: string) => {
 
   const resultsLabel = useLabel<string>({
     name: 'resultsLabel',
-    initialValue: '',
+    value: '',
     expandHorizontally: false,
     tagName: 'h4',
   })
 
   const active = isPollActive(poll?.proposal?.params)
-
-  useEffect(() => {
-    resultsLabel.setValue(
-      active
-        ? isPastDue
-          ? `Voting results will be available when ${isMine ? 'you complete' : 'the owner formally completes'} the poll.`
-          : ''
-        : remainingTime
-          ? isPastDue
-            ? isMine
-              ? 'Voting results will be available when you complete the poll.'
-              : 'Voting results will be available when the owner formally completes the poll.'
-            : ''
-          : isMine
-            ? 'Voting results will be available when you complete the poll.'
-            : 'Voting results will be available when the owner completes the poll.',
-    )
-  }, [active, remainingTime, isPastDue, isMine])
 
   const completePoll = useAction({
     name: 'completePoll',

@@ -18,7 +18,6 @@ export type LabelProps<DataType = MarkdownCode> = Pick<
   | 'hidden'
   | 'containerClassName'
   | 'expandHorizontally'
-  | 'initialValue'
   | 'validators'
   | 'validateOnChange'
   | 'showValidationSuccess'
@@ -46,11 +45,16 @@ export type LabelProps<DataType = MarkdownCode> = Pick<
    * My default, de render as MarkDown
    */
   renderer?: RendererFunction<string>
+
+  /**
+   * The current value to display
+   */
+  value: DataType
 }
 
 export type LabelControls<DataType> = Omit<
   InputFieldControls<DataType>,
-  'placeholder' | 'enabled' | 'whyDisabled'
+  'placeholder' | 'enabled' | 'whyDisabled' | 'setValue' | 'initialValue'
 > & {
   classnames: string[]
   renderedContent: ReactNode
@@ -59,13 +63,14 @@ export type LabelControls<DataType> = Omit<
 export function useLabel<DataType extends string = string>(
   props: LabelProps<DataType>,
 ): LabelControls<DataType> {
-  const { classnames = [], formatter, tagName = 'span' } = props
+  const { classnames = [], formatter, tagName = 'span', value } = props
   const { renderer = (value, tagName: TagName) => renderMarkdown(value, tagName) } = props
 
   const controls = useInputField(
     'label',
     {
       ...props,
+      initialValue: value,
     },
     {
       isEmpty: value => !value,
@@ -73,11 +78,12 @@ export function useLabel<DataType extends string = string>(
     },
   )
 
-  const formattedValue = formatter ? formatter(controls.value) : controls.value
+  const formattedValue = formatter ? formatter(value) : value
   const renderedContent = renderer(formattedValue, tagName)
 
   return {
     ...controls,
+    value,
     classnames: getAsArray(classnames),
     renderedContent,
   }

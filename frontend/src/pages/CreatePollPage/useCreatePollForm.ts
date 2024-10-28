@@ -58,13 +58,13 @@ export const useCreatePollForm = () => {
 
   const title = useLabel({
     name: 'title',
-    initialValue: stepTitles[step],
+    value: stepTitles[step],
     tagName: 'h2',
   })
 
   const intro = useLabel({
     name: 'intro',
-    initialValue: 'Once created, your poll will be live immediately and responses will start being recorded.',
+    value: 'Once created, your poll will be live immediately and responses will start being recorded.',
   })
 
   const question = useTextField({
@@ -149,7 +149,7 @@ export const useCreatePollForm = () => {
 
   const gasFreeExplanation = useLabel({
     name: 'gasFreeExplanation',
-    initialValue: `We calculate and suggest the amount of ${nativeTokenName} needed for gas based on the amount of users that are expected to vote. Any remaining ${nativeTokenName} from the gas sponsoring wallet will be refunded to you once the poll is completed.`,
+    value: `We calculate and suggest the amount of ${nativeTokenName} needed for gas based on the amount of users that are expected to vote. Any remaining ${nativeTokenName} from the gas sponsoring wallet will be refunded to you once the poll is completed.`,
     visible: gasFree.value,
     classnames: classes.explanation,
   })
@@ -280,20 +280,16 @@ export const useCreatePollForm = () => {
   const pollCompletionLabel = useLabel<string>({
     name: 'pollCompletionLabel',
     visible: hasValidCompletionDate,
-    initialValue: '??',
+    value: hasCompletionDate
+      ? (DateUtils.getTextDescriptionOfTime(
+          DateUtils.calculateRemainingTimeFrom(pollCompletionDate.value.getTime() / 1000, now),
+        ) ?? '')
+      : '',
   })
 
   useEffect(() => {
     void pollCompletionDate.validate({ reason: 'change', isStillFresh: () => true })
   }, [hasCompletionDate.value, now])
-
-  useEffect(() => {
-    if (hasValidCompletionDate) {
-      const deadline = pollCompletionDate.value.getTime() / 1000
-      const remaining = DateUtils.calculateRemainingTimeFrom(deadline, now)
-      pollCompletionLabel.setValue(DateUtils.getTextDescriptionOfTime(remaining) ?? '')
-    }
-  }, [hasCompletionDate.value, hasValidCompletionDate, now])
 
   const stepFields: Record<CreationStep, FieldConfiguration> = {
     basics: [question, description, answers, customCSS],
