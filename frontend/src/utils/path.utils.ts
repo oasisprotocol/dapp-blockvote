@@ -4,7 +4,8 @@ import { Params } from 'react-router-dom'
 /**
  * Get the poll path from a poll or proposal id.
  */
-export const getPollPath = (pollId: string): string => `/${proposalIdToSlug(pollId!)}`
+export const getPollPath = (pollId: string): string =>
+  `/${pollId == 'demo' ? 'demo' : proposalIdToSlug(pollId!)}`
 
 /**
  * Get the poll ID from the parameters found in the URL, coming from the router.
