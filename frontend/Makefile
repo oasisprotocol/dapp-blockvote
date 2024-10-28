@@ -11,8 +11,8 @@ dev-staging:
 dev-production:
 	$(NPM) dev -m production
 
-dev-pontusxtest:
-	$(NPM) dev -m pontusxtest
+dev-pontusx:
+	$(NPM) dev -m development.pontusx
 
 dev-lido:
 	$(NPM) dev -m development.lido
@@ -29,14 +29,14 @@ prettify:
 build-staging:
 	$(NPM) vite build -m staging
 
-build-pontusxtest:
-	$(NPM) vite build -m pontusxtest
-
 build-production:
 	$(NPM) vite build -m production
 
 build-production-lido:
 	$(NPM) vite build -m production.lido
+
+build-pontusx:
+	$(NPM) vite build -m production.pontusx
 
 clean:
 	rm -rf dist
