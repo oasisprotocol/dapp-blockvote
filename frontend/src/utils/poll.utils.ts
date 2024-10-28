@@ -44,7 +44,12 @@ import {
   StoredPoll,
 } from '../types'
 import { EthereumContext } from '../providers/EthereumContext'
-import { DecisionWithReason, denyWithReason } from '../components/InputFields'
+import {
+  DecisionWithReason,
+  denyWithReason,
+  basicExecutionContext,
+  ExecutionContext,
+} from '../components/InputFields'
 import { FetcherFetchOptions } from './StoredLRUCache'
 import { findACLForOptions } from '../components/ACLs'
 import { VITE_NETWORK_NUMBER } from '../constants/config'
@@ -202,7 +207,7 @@ export const createPoll = async (
   pollManager: PollManager,
   creator: string,
   props: CreatePollProps,
-  updateStatus: (message: MarkdownCode) => void,
+  context: ExecutionContext = basicExecutionContext,
 ) => {
   const {
     question,
@@ -220,7 +225,7 @@ export const createPoll = async (
     explorerBaseUrl,
   } = props
 
-  updateStatus('Compiling data')
+  context.setStatus('Compiling data')
   const poll: Poll = {
     name: question,
     description,
@@ -247,7 +252,7 @@ export const createPoll = async (
   console.log('params are', proposalParams)
   console.log('ACL data is', aclData)
 
-  updateStatus('Waiting for signer...')
+  context.setStatus('Waiting for signer...')
   const createProposalTx = await pollManager.create(proposalParams, aclData, {
     value: subsidizeAmount ?? 0n,
   })
@@ -265,14 +270,14 @@ export const createPoll = async (
 
   console.log('doCreatePoll: creating proposal tx', createProposalTx.hash)
 
-  updateStatus(`Sending ${txLink} ...`)
+  context.setStatus(`Sending ${txLink} ...`, 10) // TODO: measure this
 
   const receipt = (await createProposalTx.wait())!
   if (receipt.status !== 1) {
     console.log('Receipt is', receipt)
     throw new Error(`createProposal ${txLink} receipt reported failure.`)
   }
-  updateStatus('Created poll')
+  context.log('Created poll')
   if (isHidden) {
     const proposalId = await pollManager.getProposalId(proposalParams, aclData, creator)
     console.log('Created poll with hidden (predicted) proposal id is:', proposalId)
@@ -313,20 +318,44 @@ async function detectGasRefundOnCompletion(receipt: ContractTransactionReceipt, 
   }
 }
 
-export const completePoll = async (eth: EthereumContext, pollManager: PollManager, proposalId: string) => {
+export const completePoll = async (
+  eth: EthereumContext,
+  pollManager: PollManager,
+  proposalId: string,
+  context: ExecutionContext = basicExecutionContext,
+) => {
   await eth.switchNetwork() // ensure we're on the correct network first!
+  context.setStatus('Waiting for signer...')
   const tx = await pollManager.close(proposalId)
+  const txLink = getLink({
+    href: eth.explorerBaseUrl ? StringUtils.getTransactionUrl(eth.explorerBaseUrl, tx.hash) : undefined,
+    label: 'transaction',
+  })
+  context.setStatus(`Sending ${txLink}...`, 10)
   const receipt = await tx.wait()
-  if (!receipt || receipt!.status != 1) throw new Error('Complete ballot tx failed')
+  if (!receipt || receipt!.status != 1) throw new Error(`Complete ballot ${txLink} failed`)
+  context.setStatus('Waiting for gas to be refunded...')
   await detectGasRefundOnCompletion(receipt, pollManager)
 }
 
 // Destroying the poll will automatically close it first
-export const destroyPoll = async (eth: EthereumContext, pollManager: PollManager, proposalId: string) => {
+export const destroyPoll = async (
+  eth: EthereumContext,
+  pollManager: PollManager,
+  proposalId: string,
+  context: ExecutionContext = basicExecutionContext,
+) => {
   await eth.switchNetwork() // ensure we're on the correct network first!
+  context.setStatus('Waiting for signer...')
   const tx = await pollManager.destroy(proposalId)
+  const txLink = getLink({
+    href: eth.explorerBaseUrl ? StringUtils.getTransactionUrl(eth.explorerBaseUrl, tx.hash) : undefined,
+    label: 'transaction',
+  })
+  context.setStatus(`Sending ${txLink}...`, 10)
   const receipt = await tx.wait()
-  if (!receipt || receipt!.status != 1) throw new Error('Destroy poll tx failed')
+  if (!receipt || receipt!.status != 1) throw new Error(`Destroy poll ${txLink} failed`)
+  context.setStatus('Waiting for gas to be refunded...')
   await detectGasRefundOnCompletion(receipt, pollManager)
 }
 

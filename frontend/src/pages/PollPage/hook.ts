@@ -7,18 +7,21 @@ import { useEthereum } from '../../hooks/useEthereum'
 import { DateUtils } from '../../utils/date.utils'
 import { completePoll as doCompletePoll, destroyPoll as doDestroyPoll } from '../../utils/poll.utils'
 import {
+  configuredNetworkName,
   demoSettings,
   designDecisions,
+  nativeTokenName,
   VITE_CONTRACT_POLLMANAGER,
   VITE_NETWORK_BIGINT,
 } from '../../constants/config'
 import { useTime } from '../../hooks/useTime'
 import { tuneValue } from '../../utils/tuning'
-import { getVerdict } from '../../components/InputFields'
+import { Decision, deny, getVerdict, useAction, useLabel } from '../../components/InputFields'
 import { useExtendedPoll } from '../../hooks/useExtendedPoll'
 import { useProposalFromChain } from '../../hooks/useProposalFromChain'
 import { useNavigate } from 'react-router-dom'
-import { isPollActive } from '../../types'
+import { isPollActive, shouldPublishVoters, shouldPublishVotes } from '../../types'
+import classes from './index.module.css'
 
 export const usePollData = (pollId: string) => {
   const navigate = useNavigate()
@@ -27,11 +30,10 @@ export const usePollData = (pollId: string) => {
 
   const [isVoting, setIsVoting] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
-  const [isCompleting, setIsCompleting] = useState(false)
   const [hasCompleted, setHasCompleted] = useState(false)
   const [selectedChoice, setSelectedChoice] = useState<bigint | undefined>()
   const [existingVote, setExistingVote] = useState<bigint | undefined>(undefined)
-  const [isDestroying, setIsDestroying] = useState(false)
+  const [isBusy, setIsBusy] = useState(false)
 
   const proposalId = `0x${pollId}`
 
@@ -78,10 +80,34 @@ export const usePollData = (pollId: string) => {
     [remainingTime],
   )
 
+  const remainingTimeLabel = useLabel({
+    name: 'remainingTime',
+    visible: !!remainingTimeString,
+    initialValue: remainingTimeString ?? '',
+    tagName: 'h4',
+    expandHorizontally: false,
+  })
+
+  const publishVotesLabel = useLabel({
+    name: 'publishVotes',
+    visible: shouldPublishVotes(poll?.proposal.params),
+    initialValue: 'Votes will be made public when the poll is completed.',
+    tagName: 'div',
+  })
+
+  const publishVotersLabel = useLabel({
+    name: 'publishVoters',
+    visible: shouldPublishVoters(poll?.proposal.params),
+    initialValue: 'The addresses of the voters will be made public when the poll is completed.',
+    tagName: 'div',
+  })
+
+  useEffect(() => remainingTimeLabel.setValue(remainingTimeString ?? ''), [remainingTimeString])
+
   const isPastDue = !!remainingTime?.isPastDue
 
   let canSelect = false
-  let canVote = false
+  let canVote: Decision = false
 
   if (designDecisions.showSubmitButton) {
     canSelect =
@@ -91,21 +117,24 @@ export const usePollData = (pollId: string) => {
       !isVoting
 
     canVote =
-      (!!eth.state.address || isDemo) &&
-      !isCompleting &&
-      !isDestroying &&
-      winningChoice === undefined &&
-      selectedChoice !== undefined &&
-      existingVote === undefined &&
-      getVerdict(permissions.canVote, false)
+      !eth.state.address && !isDemo
+        ? deny('Waiting for wallet connection...')
+        : isBusy
+          ? deny('Doing something else now...')
+          : winningChoice !== undefined
+            ? deny('Poll is over!')
+            : existingVote !== undefined
+              ? deny('Already voted!')
+              : selectedChoice === undefined
+                ? deny('Please select an option first!')
+                : getVerdict(permissions.canVote, false)
   } else {
     canSelect =
       (!!eth.state.address || isDemo) &&
       !remainingTime?.isPastDue &&
       winningChoice === undefined &&
       // (eth.state.address === undefined || existingVote === undefined) &&
-      !isCompleting &&
-      !isDestroying &&
+      !isBusy &&
       winningChoice === undefined &&
       existingVote === undefined &&
       getVerdict(permissions.canVote, false) &&
@@ -113,38 +142,116 @@ export const usePollData = (pollId: string) => {
   }
 
   const hasWallet = isDemo || (isHomeChain && userAddress !== ZeroAddress)
-  const hasWalletOnWrongNetwork = !isDemo && !isHomeChain && userAddress !== ZeroAddress
 
-  const canComplete = !!isMine && (!deadline || isPastDue) && (!isDestroying || !isCompleting)
-  const canDestroy = !!isMine && (!isDestroying || !isCompleting)
+  const walletLabel = useLabel({
+    name: 'walletLabel',
+    visible: !isPastDue && !hasWallet && !isDemo,
+    classnames: classes.needWallet,
+    initialValue:
+      !isHomeChain && userAddress !== ZeroAddress
+        ? `To vote on this poll, please point your wallet to the ${configuredNetworkName}</b> by clicking
+    the "Switch Network" button. This will open your wallet, and let you confirm that you
+  want to connect to the ${configuredNetworkName}. Ensure you have enough ${nativeTokenName} for any
+    transaction fees.`
+        : `To vote on this poll, please **connect your wallet** by clicking the "Connect Wallet"
+            button. This will open your wallet, and let you confirm the connection, and also point your wallet
+            to the ${configuredNetworkName} network. Ensure you have enough ${nativeTokenName} for any
+            transaction fees.`,
+  })
 
-  // console.log("canAclManage?", canAclManage, "deadline:", deadline, "isPastDue?", isPastDue, "canComplete?", canComplete)
+  const voteAction = useAction({
+    name: 'vote',
+    label: 'Submit vote',
+    pendingLabel: 'Submitting vote',
+    size: 'small',
+    visible:
+      hasWallet && getVerdict(permissions.canVote, false) && !isPastDue && designDecisions.showSubmitButton,
+    enabled: canVote,
+    action: () => {},
+  })
 
-  const completePoll = async () => {
-    if (!signerDao) throw new Error("Can't complete poll with no poll manager.")
-    setIsCompleting(true)
-    try {
-      await doCompletePoll(eth, signerDao, proposalId)
-      setHasCompleted(true)
-    } catch (e) {
-      console.log('Error completing poll:', e)
-    } finally {
-      setIsCompleting(false)
-    }
-  }
+  const resultsLabel = useLabel<string>({
+    name: 'resultsLabel',
+    initialValue: '',
+    expandHorizontally: false,
+    tagName: 'h4',
+  })
 
-  const destroyPoll = async () => {
-    if (!signerDao) throw new Error("Can't destroy poll with no poll manager.")
-    setIsDestroying(true)
-    try {
-      await doDestroyPoll(eth, signerDao, proposalId)
-      navigate('/')
-    } catch (e) {
-      console.log('Error destroying poll:', e)
-    } finally {
-      setIsDestroying(false)
-    }
-  }
+  const active = isPollActive(poll?.proposal?.params)
+
+  useEffect(() => {
+    resultsLabel.setValue(
+      active
+        ? isPastDue
+          ? `Voting results will be available when ${isMine ? 'you complete' : 'the owner formally completes'} the poll.`
+          : ''
+        : remainingTime
+          ? isPastDue
+            ? isMine
+              ? 'Voting results will be available when you complete the poll.'
+              : 'Voting results will be available when the owner formally completes the poll.'
+            : ''
+          : isMine
+            ? 'Voting results will be available when you complete the poll.'
+            : 'Voting results will be available when the owner completes the poll.',
+    )
+  }, [active, remainingTime, isPastDue, isMine])
+
+  const completePoll = useAction({
+    name: 'completePoll',
+    label: 'Complete poll',
+    description: 'Close the poll and publish the results',
+    pendingLabel: 'Completing poll',
+    visible: isMine && hasWallet,
+    confirmQuestion: "Are you sure you want to complete this poll? This can't be undone.",
+    size: 'small',
+    color: isMine && (isPastDue || !remainingTime) ? 'primary' : 'secondary',
+    enabled: !signerDao
+      ? deny('Waiting for connection to Poll Manager')
+      : isBusy
+        ? deny('Doing something else now')
+        : deadline && !isPastDue
+          ? deny("Can't close before the pre-defined time.")
+          : true,
+    action: async context => {
+      try {
+        await doCompletePoll(eth, signerDao!, proposalId, context)
+        setHasCompleted(true)
+      } catch (e) {
+        console.log(JSON.stringify(e, null, '  '))
+        throw new Error('Error completing poll')
+      }
+    },
+  })
+
+  const destroyPoll = useAction({
+    name: 'destroyPoll',
+    label: 'Destroy poll',
+    description: 'Delete this poll from the system',
+    size: 'small',
+    color: 'secondary',
+    pendingLabel: 'Destroying poll',
+    visible: isMine && hasWallet,
+    enabled: !signerDao
+      ? deny('Waiting for connection to Poll Manager')
+      : isBusy
+        ? deny('Doing something else now')
+        : true,
+    confirmQuestion: "Are you you you want to destroy this poll? This can't be undone.",
+    action: async context => {
+      try {
+        await doDestroyPoll(eth, signerDao!, proposalId, context)
+        navigate('/')
+      } catch (e: any) {
+        console.log(JSON.stringify(e, null, '  '))
+        throw new Error(typeof e === 'object' ? e.shortMessage : 'Error destroying poll')
+      }
+    },
+  })
+
+  useEffect(() => {
+    setIsBusy(completePoll.isPending || destroyPoll.isPending || isVoting)
+  }, [completePoll.isPending, destroyPoll.isPending, isVoting])
 
   const moveDemoAfterVoting = useCallback(() => {
     const remainingSeconds = remainingTime?.totalSeconds
@@ -397,11 +504,11 @@ export const usePollData = (pollId: string) => {
   return {
     userAddress,
     hasWallet,
-    hasWalletOnWrongNetwork,
+    walletLabel,
     isLoading: isProposalLoading || isLoading,
     error: proposalError ?? error,
     poll,
-    active: isPollActive(poll?.proposal?.params),
+    active,
 
     selectedChoice: winningChoice ?? selectedChoice,
     canSelect,
@@ -417,35 +524,33 @@ export const usePollData = (pollId: string) => {
     },
     remainingTime,
     remainingTimeString,
+    remainingTimeLabel,
 
     isMine,
     permissions,
     permissionsPending,
     checkPermissions,
-    canVote,
     gaslessEnabled,
     gaslessPossible,
     gvAddresses,
     gvBalances,
 
-    vote,
     isVoting,
     hasVoted,
     existingVote,
     topUp,
 
-    canComplete,
-    completePoll,
-    isCompleting,
     hasCompleted,
-    canDestroy,
+    voteAction,
+    completePoll,
     destroyPoll,
-    isDestroying,
-
     voteCounts,
     winningChoice,
     pollResults,
     correctiveAction,
+    publishVotesLabel,
+    publishVotersLabel,
+    resultsLabel,
   }
 }
 

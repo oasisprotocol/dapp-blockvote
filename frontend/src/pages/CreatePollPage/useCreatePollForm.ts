@@ -356,9 +356,7 @@ export const useCreatePollForm = () => {
           ? deny('Waiting for wallet')
           : true,
     size: 'small',
-    action: async action => {
-      const { setPendingMessage: logger } = action
-
+    action: async context => {
       try {
         setIsFrozen(true)
         const aclConfigValues = currentAclConfig.values
@@ -368,7 +366,7 @@ export const useCreatePollForm = () => {
           flags: pollFlags,
         } = await currentAcl.getAclOptions(
           aclConfigValues as never, // TODO: why is this conversion necessary?
-          logger,
+          context,
         )
         const pollProps: CreatePollProps = {
           question: question.value,
@@ -388,7 +386,7 @@ export const useCreatePollForm = () => {
 
         // console.log('Will create poll with props:', pollProps)
 
-        const newId = await doCreatePoll(daoSigner!, eth.state.address!, pollProps, logger)
+        const newId = await doCreatePoll(daoSigner!, eth.state.address!, pollProps, context)
         setIsFrozen(false)
         if (newId) {
           navigate(getPollPath(newId))
