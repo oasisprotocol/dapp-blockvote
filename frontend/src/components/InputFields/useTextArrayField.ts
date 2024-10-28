@@ -10,8 +10,8 @@ import {
   findDuplicates,
   SingleOrArray,
   ValidatorFunction,
-  wrapProblem,
-  ProblemAtLocation,
+  wrapValidatorOutput,
+  MessageAtLocation,
   flatten,
 } from './util'
 import { useState } from 'react'
@@ -222,8 +222,8 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
           setPendingValidationIndex(index)
           controls.updateStatus({ message: undefined })
           const reports = getAsArray(await itemValidator(value, controls, reason))
-            .map(rep => wrapProblem(rep, `value-${index}`, 'error'))
-            .filter((p): p is ProblemAtLocation => !!p)
+            .map(rep => wrapValidatorOutput(rep, `value-${index}`, 'error'))
+            .filter((p): p is MessageAtLocation => !!p)
           setPendingValidationIndex(undefined)
           return reports
         },
@@ -234,28 +234,9 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
     {
       ...props,
       initialValue,
-      cleanUp: values => {
-        const cleanValues = values.map(s => s.trim())
-        return dropEmptyItems ? cleanValues.filter(s => !!s) : cleanValues
-      },
+      cleanUp: values => values.map(s => s.trim()),
       validators: undefined,
       validatorsGenerator: values => [
-        // No empty elements, please
-        allowEmptyItems && dropEmptyItems
-          ? undefined
-          : (values, _control, reason) =>
-              reason === 'change'
-                ? []
-                : values.map((value, index): ProblemAtLocation | undefined =>
-                    value
-                      ? undefined
-                      : {
-                          signature: 'empty:',
-                          message: emptyItemMessage,
-                          location: `value-${index}`,
-                        },
-                  ),
-
         // Do we have enough elements?
         minItemCount
           ? (values, _control, reason) => {
@@ -265,6 +246,22 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
                 : undefined
             }
           : undefined,
+
+        // No empty elements, please
+        allowEmptyItems || dropEmptyItems
+          ? undefined
+          : (values, _control, reason) =>
+              reason === 'change'
+                ? []
+                : values.map((value, index): MessageAtLocation | undefined =>
+                    value
+                      ? undefined
+                      : {
+                          signature: 'empty:',
+                          text: emptyItemMessage,
+                          location: `value-${index}`,
+                        },
+                  ),
 
         // Do we have too many elements?
         maxItemCount
@@ -279,11 +276,11 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
         // Check minimum length on all items
         minLength
           ? values =>
-              values.map((value, index): ProblemAtLocation | undefined =>
+              values.map((value, index): MessageAtLocation | undefined =>
                 !!value && value.length < minLength
                   ? {
                       signature: 'tooShort',
-                      message: `${getNumberMessage(tooShortItemMessage, minLength)} (Currently: ${value.length})`,
+                      text: `${getNumberMessage(tooShortItemMessage, minLength)} (Currently: ${value.length})`,
                       location: `value-${index}`,
                     }
                   : undefined,
@@ -293,11 +290,11 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
         // Check maximum length on all items
         maxLength
           ? values =>
-              values.map((value, index): ProblemAtLocation | undefined =>
+              values.map((value, index): MessageAtLocation | undefined =>
                 !!value && value.length > maxLength
                   ? {
                       signature: 'tooLong',
-                      message: `${getNumberMessage(tooLongItemMessage, maxLength)} (Currently: ${value.length})`,
+                      text: `${getNumberMessage(tooLongItemMessage, maxLength)} (Currently: ${value.length})`,
                       location: `value-${index}`,
                     }
                   : undefined,
@@ -311,11 +308,11 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
               findDuplicates(values).flatMap((list, listIndex) => {
                 const realList = list.filter(index => !!values[index])
                 return realList.map(
-                  (index): ProblemAtLocation => ({
+                  (index): MessageAtLocation => ({
                     signature: 'duplicate',
-                    message: duplicatesErrorMessages[listIndex],
+                    text: duplicatesErrorMessages[listIndex],
                     location: `value-${index}`,
-                    level: (['warning', 'error'] as const)[listIndex],
+                    type: (['warning', 'error'] as const)[listIndex],
                   }),
                 )
               }),
@@ -332,7 +329,7 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
       ],
     },
     {
-      isEmpty: value => !value.length,
+      isEmpty: value => !value.some(v => !!v),
       isEqual: (a, b) => a.join('-') === b.join('-'),
     },
   )
@@ -369,11 +366,19 @@ export function useTextArrayField(props: TextArrayProps): TextArrayControls {
   }
 
   newControls.setItem = (index, value) => {
-    // controls.clearProblemsAt(`value-${index}`)
+    // controls.clearMessagesAt(`value-${index}`)
     controls.setValue(controls.value.map((oldValue, oldIndex) => (oldIndex === index ? value : oldValue)))
     if (onItemEdited) {
       onItemEdited(index, value, newControls)
     }
+  }
+
+  newControls.validate = async params => {
+    const hasError = await controls.validate(params)
+    if (!hasError && dropEmptyItems) {
+      controls.setValue(controls.cleanValue.filter(s => !!s))
+    }
+    return hasError
   }
 
   return newControls

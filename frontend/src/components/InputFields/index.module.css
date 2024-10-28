@@ -1,11 +1,12 @@
 .fieldRow,
 .fieldRowRight {
-  width: 100%;
+
   display: flex;
   align-content: center;
-  align-items: center;
+  /*align-items: center;*/
   overflow: hidden;
-  gap: 16px;
+  gap: 32px;
+
 }
 
 .fieldRow {
@@ -16,18 +17,34 @@
   flex-direction: row-reverse;
 }
 
-.fieldContainer {
+.fieldRowExpand {
   width: 100%;
+  button {
+    width: 100%;
+  }
+}
+
+.fieldRowCompact {
+  justify-content: center;
+}
+
+
+.fieldContainer {
   overflow-y: hidden;
   overflow-x: hidden;
   /*border: 1px solid green;*/
-  label {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    gap: 4px;
-  }
+}
+
+.fieldContainerExpand {
+  width: 100%;
+}
+
+.fieldLabelTag {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 4px;
 }
 
 .fieldPadding {
@@ -68,7 +85,26 @@
   color: chocolate;
 }
 
+.fieldInfo {
+  padding-top: 4px;
+  color: black;
+}
+
 .textValue {
+  width: 99%;
+  margin-left: 1px;
+
+  input {
+    padding: 12px 16px;
+    height: 48px;
+
+    background: #ffffff;
+    border: 1px solid #80848e;
+    border-radius: 8px;
+  }
+}
+
+.dateValue {
   width: 99%;
 
   input {
@@ -91,7 +127,7 @@
 .boolValue {
   font-style: normal;
   font-weight: 400;
-  font-size: 13px;
+  font-size: 16px;
 
   input {
     width: 24px;
@@ -167,6 +203,11 @@
   cursor: pointer;
 }
 
+.addIconDisabled {
+  color: gray;
+  cursor: not-allowed;
+}
+
 .disabled {
   color: gray;
 }
@@ -179,6 +220,13 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  width: 100%;
   overflow-x: hidden;
+}
+
+.fieldGroupExpand {
+  width: 100%;
+}
+
+.fieldGroupCompact {
+
 }

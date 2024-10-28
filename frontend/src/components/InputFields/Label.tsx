@@ -7,20 +7,17 @@ import { WithLabelAndDescription } from './WithLabelAndDescription'
 import { WithValidation } from './WithValidation'
 
 export const Label: FC<LabelControls<any>> = props => {
-  const { value, allProblems, formatter, renderer, classnames } = props
-
-  const formattedValue = formatter ? formatter(value) : value
-  const renderedValue = renderer ? renderer(formattedValue) : formattedValue
+  const { allMessages, classnames, renderedContent } = props
 
   return (
     <WithVisibility field={props}>
       <WithLabelAndDescription field={props}>
         <WithValidation
           field={props}
-          problems={allProblems.root}
+          messages={allMessages.root}
           fieldClasses={[classes.label, ...classnames]}
         >
-          <span>{renderedValue}</span>
+          {renderedContent}
         </WithValidation>
       </WithLabelAndDescription>
     </WithVisibility>

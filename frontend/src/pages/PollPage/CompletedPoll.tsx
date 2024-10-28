@@ -5,7 +5,7 @@ import { StringUtils } from '../../utils/string.utils'
 import { Card } from '../../components/Card'
 import { SocialShares } from '../../components/SocialShares'
 import { PollAccessIndicatorWrapper } from '../../components/PollCard/PollAccessIndicator'
-import { getVerdict } from '../../components/InputFields'
+import { getVerdict, InputField } from '../../components/InputFields'
 import { MotionDiv } from '../../components/Animations'
 import { VoteBrowser } from '../../components/VoteBrowser/VoteBrowser'
 import { VoterBrowser } from '../../components/VoterBrowser/VoterBrowser'
@@ -14,15 +14,9 @@ import { MarkdownBlock } from '../../components/Markdown'
 export const CompletedPoll: FC<
   Pick<
     PollData,
-    | 'poll'
-    | 'pollResults'
-    | 'isMine'
-    | 'permissions'
-    | 'checkPermissions'
-    | 'hasWallet'
-    | 'hasWalletOnWrongNetwork'
+    'poll' | 'pollResults' | 'isMine' | 'permissions' | 'checkPermissions' | 'hasWallet' | 'destroyPoll'
   >
-> = ({ poll, pollResults, isMine, permissions, checkPermissions, hasWallet, hasWalletOnWrongNetwork }) => {
+> = ({ poll, pollResults, isMine, permissions, checkPermissions, hasWallet, destroyPoll }) => {
   const { name, description } = poll!.ipfsParams!
   const { choices, votes, voters, totalVotes } = pollResults!
   const { explanation: aclExplanation, canVote: aclCanVote } = permissions
@@ -33,7 +27,7 @@ export const CompletedPoll: FC<
       <h4 className={'niceLine'}>
         <div className={'niceLine'}>
           {name}
-          {hasWallet && !hasWalletOnWrongNetwork && (
+          {hasWallet && (
             <PollAccessIndicatorWrapper
               isMine={isMine}
               permissions={permissions}
@@ -107,6 +101,7 @@ export const CompletedPoll: FC<
         introText={'See the results here:'}
         pageTitle={name}
       />
+      <InputField controls={{ ...destroyPoll, expandHorizontally: false }} />
     </Card>
   )
 }

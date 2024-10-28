@@ -9,21 +9,42 @@ export type FieldLike = Pick<
 
 export type FieldConfiguration = SingleOrArray<FieldLike>[]
 
-export const findErrorsInFields = async (
+/**
+ * Go through a group of fields, and do full validation.
+ *
+ * Returns true if there was an error.
+ */
+export const validateFields = async (
   fields: FieldConfiguration,
+  /**
+   * Why are we doing this?
+   *
+   * Behavior will be different depending on the reason.
+   * For example, we will clean values on form submission, but not when validating on change.
+   */
   reason: ValidationReason,
+
+  /**
+   * Tester for value freshness.
+   *
+   * Validation will be interrupted if the returned value changes to false.
+   */
   isStillFresh: () => boolean,
 ): Promise<boolean> => {
-  const visibleFields = fields.flatMap(config => getAsArray(config)).filter(field => field.visible)
+  // Get a flattened list of fields
+  const allFields = fields.flatMap(config => getAsArray(config))
   let hasError = false
-  for (const field of visibleFields) {
-    const isFieldOK = await field.validate({ reason, isStillFresh })
-    hasError = hasError || !isFieldOK
+  for (const field of allFields) {
+    const isFieldProblematic = await field.validate({ reason, isStillFresh })
+    hasError = hasError || isFieldProblematic
   }
   return hasError
 }
 
-export const collectErrorsInFields = (fields: FieldConfiguration): boolean =>
+/**
+ * Check whether any of these fields has an error
+ */
+export const doFieldsHaveAnError = (fields: FieldConfiguration): boolean =>
   fields
     .flatMap(config => getAsArray(config))
     .filter(field => field.visible)

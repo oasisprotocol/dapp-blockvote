@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
-  collectErrorsInFields,
+  doFieldsHaveAnError,
   deny,
   FieldConfiguration,
   FieldLike,
-  findErrorsInFields,
+  validateFields,
   flatten,
   useBooleanField,
   useDateField,
@@ -12,6 +12,8 @@ import {
   useOneOfField,
   useTextArrayField,
   useTextField,
+  useAction,
+  InputFieldProps,
 } from '../../components/InputFields'
 import { createPoll as doCreatePoll, parseEther, CreatePollProps } from '../../utils/poll.utils'
 import { useContracts } from '../../hooks/useContracts'
@@ -23,16 +25,19 @@ import { designDecisions, MIN_COMPLETION_TIME_MINUTES, nativeTokenName } from '.
 import { useNavigate } from 'react-router-dom'
 import { acls } from '../../components/ACLs'
 import { getPollPath } from '../../utils/path.utils'
+import { useEthereum } from '../../hooks/useEthereum'
+import { StringUtils } from '../../utils/string.utils'
+import { getLink } from '../../utils/markdown.utils'
 
 // The steps / pages of the wizard
-const StepTitles = {
+const stepTitles = {
   basics: 'Poll creation',
   permission: 'Pre-vote settings',
   results: 'Results settings',
 } as const
 
-type CreationStep = keyof typeof StepTitles
-const process: CreationStep[] = Object.keys(StepTitles) as CreationStep[]
+type CreationStep = keyof typeof stepTitles
+const process: CreationStep[] = Object.keys(stepTitles) as CreationStep[]
 const numberOfSteps = process.length
 
 const expectedRanges = {
@@ -43,15 +48,24 @@ const expectedRanges = {
 } as const
 
 export const useCreatePollForm = () => {
-  // const eth = useEthereum()
+  const { explorerBaseUrl } = useEthereum()
   const { eth, pollManagerWithSigner: daoSigner } = useContracts()
 
-  const [isCreating, setIsCreating] = useState<boolean>(false)
   const [step, setStep] = useState<CreationStep>('basics')
   const [stepIndex, setStepIndex] = useState(0)
-  const [validationPending, setValidationPending] = useState(false)
 
   const navigate = useNavigate()
+
+  const title = useLabel({
+    name: 'title',
+    value: stepTitles[step],
+    tagName: 'h2',
+  })
+
+  const intro = useLabel({
+    name: 'intro',
+    value: 'Once created, your poll will be live immediately and responses will start being recorded.',
+  })
 
   const question = useTextField({
     name: 'question',
@@ -135,7 +149,7 @@ export const useCreatePollForm = () => {
 
   const gasFreeExplanation = useLabel({
     name: 'gasFreeExplanation',
-    initialValue: `We calculate and suggest the amount of ${nativeTokenName} needed for gas based on the amount of users that are expected to vote. Any remaining ${nativeTokenName} from the gas sponsoring wallet will be refunded to you once the poll is completed.`,
+    value: `We calculate and suggest the amount of ${nativeTokenName} needed for gas based on the amount of users that are expected to vote. Any remaining ${nativeTokenName} from the gas sponsoring wallet will be refunded to you once the poll is completed.`,
     visible: gasFree.value,
     classnames: classes.explanation,
   })
@@ -164,6 +178,12 @@ export const useCreatePollForm = () => {
     amountOfSubsidy.setValue(cost.toString())
   }, [gasFree.value, currentAcl, numberOfExpectedVoters.value])
 
+  const [isFrozen, setIsFrozen] = useState(false)
+
+  const freezingOptions: Partial<InputFieldProps<any>> = {
+    enabled: isFrozen ? deny('Too late to change your mind; we are already creating the poll') : true,
+  }
+
   const resultDisplayType = useOneOfField({
     name: 'resultDisplayType',
     label: 'Type of result display',
@@ -189,6 +209,7 @@ export const useCreatePollForm = () => {
         description: 'Everyone can see who voted for what.',
       },
     ],
+    ...freezingOptions,
     hideDisabledChoices: designDecisions.hideDisabledSelectOptions,
   } as const)
 
@@ -228,6 +249,7 @@ export const useCreatePollForm = () => {
   const hasCompletionDate = useBooleanField({
     name: 'hasCompletionDate',
     label: 'Fixed completion date',
+    ...freezingOptions,
     onValueChange: value => {
       if (value) pollCompletionDate.setValue(new Date(Date.now() + 1000 * 3600))
     },
@@ -239,6 +261,7 @@ export const useCreatePollForm = () => {
     name: 'pollCompletionDate',
     label: `Poll completion date (Time zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone})`,
     visible: hasCompletionDate.value,
+    ...freezingOptions,
     validateOnChange: true,
     showValidationPending: false,
     validators: value => {
@@ -254,29 +277,19 @@ export const useCreatePollForm = () => {
   const hasValidCompletionDate =
     hasCompletionDate.value && !!pollCompletionDate.value && !pollCompletionDate.hasProblems
 
-  const pollCompletionLabel = useLabel({
+  const pollCompletionLabel = useLabel<string>({
     name: 'pollCompletionLabel',
     visible: hasValidCompletionDate,
-    initialValue: '??',
+    value: hasCompletionDate
+      ? (DateUtils.getTextDescriptionOfTime(
+          DateUtils.calculateRemainingTimeFrom(pollCompletionDate.value.getTime() / 1000, now),
+        ) ?? '')
+      : '',
   })
 
   useEffect(() => {
     void pollCompletionDate.validate({ reason: 'change', isStillFresh: () => true })
   }, [hasCompletionDate.value, now])
-
-  useEffect(() => {
-    if (hasValidCompletionDate) {
-      const deadline = pollCompletionDate.value.getTime() / 1000
-      const remaining = DateUtils.calculateRemainingTimeFrom(deadline, now)
-      pollCompletionLabel.setValue(DateUtils.getTextDescriptionOfTime(remaining) ?? '')
-    }
-  }, [hasCompletionDate.value, hasValidCompletionDate, now])
-
-  const creationStatus = useLabel({
-    name: 'creationStatus',
-    label: '',
-    initialValue: '',
-  })
 
   const stepFields: Record<CreationStep, FieldConfiguration> = {
     basics: [question, description, answers, customCSS],
@@ -294,93 +307,106 @@ export const useCreatePollForm = () => {
       hasCompletionDate,
       pollCompletionDate,
       pollCompletionLabel,
-      creationStatus,
     ],
   }
 
-  const goToPreviousStep = () => {
-    if (stepIndex === 0) return
-    setStep(process[stepIndex - 1])
-    setStepIndex(stepIndex - 1)
-  }
+  const goToPreviousStep = useAction({
+    name: 'previousStep',
+    label: 'Back',
+    visible: stepIndex > 0 && !isFrozen,
+    size: 'small',
+    color: 'secondary',
+    variant: 'outline',
+    action: () => {
+      setStep(process[stepIndex - 1])
+      setStepIndex(stepIndex - 1)
+    },
+  })
 
-  const goToNextStep = async () => {
-    if (stepIndex === numberOfSteps - 1) return
-    setValidationPending(true)
-    const hasErrors = await findErrorsInFields(stepFields[step], 'submit', () => true)
-    setValidationPending(false)
-    if (hasErrors) return
-    setStep(process[stepIndex + 1])
-    setStepIndex(stepIndex + 1)
-  }
+  const hasErrorsOnCurrentPage = doFieldsHaveAnError(stepFields[step])
 
-  const createPoll = async () => {
-    setValidationPending(true)
-    const hasErrors = await findErrorsInFields(stepFields[step], 'submit', () => true)
-    setValidationPending(false)
-    if (hasErrors) return
+  const goToNextStep = useAction({
+    name: 'nextStep',
+    label: 'Next',
+    visible: stepIndex < numberOfSteps - 1,
+    enabled: hasErrorsOnCurrentPage ? deny('Please fix the errors first') : true,
+    size: 'small',
+    action: async () => {
+      const hasErrors = await validateFields(stepFields[step], 'submit', () => true)
+      if (hasErrors) return
+      setStep(process[stepIndex + 1])
+      setStepIndex(stepIndex + 1)
+    },
+  })
 
-    if (!daoSigner) throw new Error('DAO signer not found!')
-    if (!eth.state.address) throw new Error("Can't find my own address!")
+  const createPoll = useAction({
+    name: 'createPoll',
+    label: 'Create poll',
+    pendingLabel: 'Creating poll ...',
+    visible: stepIndex === numberOfSteps - 1,
+    enabled: hasErrorsOnCurrentPage
+      ? deny('Please fix the errors above first!')
+      : !daoSigner
+        ? deny('Waiting for blockchain connection')
+        : !eth.state.address
+          ? deny('Waiting for wallet')
+          : true,
+    size: 'small',
+    action: async context => {
+      try {
+        setIsFrozen(true)
+        const aclConfigValues = currentAclConfig.values
+        const {
+          data: aclData,
+          options: aclOptions,
+          flags: pollFlags,
+        } = await currentAcl.getAclOptions(
+          aclConfigValues as never, // TODO: why is this conversion necessary?
+          context,
+        )
+        const pollProps: CreatePollProps = {
+          question: question.value,
+          description: description.value,
+          answers: answers.value,
+          isHidden: hidden.value,
+          aclAddress: currentAcl.address,
+          aclData,
+          aclOptions,
+          pollFlags,
+          subsidizeAmount: gasFree.value ? parseEther(amountOfSubsidy.value) : undefined,
+          publishVotes: resultDisplayType.value === 'percentages_and_votes',
+          publishVoters: resultDisplayType.value === 'percentages_and_voters',
+          completionTime: hasCompletionDate.value ? pollCompletionDate.value : undefined,
+          explorerBaseUrl,
+        }
 
-    const logger = (message?: string | undefined) => creationStatus.setValue(message ?? '')
+        // console.log('Will create poll with props:', pollProps)
 
-    setIsCreating(true)
-    try {
-      const aclConfigValues = currentAclConfig.values
-      const {
-        data: aclData,
-        options: aclOptions,
-        flags: pollFlags,
-      } = await currentAcl.getAclOptions(
-        aclConfigValues as never, // TODO: why is this conversion necessary?
-        logger,
-      )
-      const pollProps: CreatePollProps = {
-        question: question.value,
-        description: description.value,
-        answers: answers.value,
-        isHidden: hidden.value,
-        aclAddress: currentAcl.address,
-        aclData,
-        aclOptions,
-        pollFlags,
-        subsidizeAmount: gasFree.value ? parseEther(amountOfSubsidy.value) : undefined,
-        publishVotes: resultDisplayType.value === 'percentages_and_votes',
-        publishVoters: resultDisplayType.value === 'percentages_and_voters',
-        completionTime: hasCompletionDate.value ? pollCompletionDate.value : undefined,
+        const newId = await doCreatePoll(daoSigner!, eth.state.address!, pollProps, context)
+        setIsFrozen(false)
+        if (newId) {
+          navigate(getPollPath(newId))
+        }
+      } catch (ex) {
+        let exString = `${ex}`
+        if (exString.startsWith('Error: user rejected action')) {
+          exString = 'Signer refused to sign transaction.'
+        } else if (exString.startsWith('Error: transaction execution reverted')) {
+          const txHash = (ex as any).receipt.hash
+          const txUrl = explorerBaseUrl ? StringUtils.getTransactionUrl(explorerBaseUrl, txHash) : undefined
+          const txLink = getLink({ href: txUrl, label: 'transaction' })
+          exString = `the ${txLink} has been reverted.`
+        }
+        console.log(ex)
+        setIsFrozen(false)
+        throw Error(`Failed to create poll: ${exString}`)
       }
-
-      // console.log('Will create poll with props:', pollProps)
-
-      const newId = await doCreatePoll(daoSigner, eth.state.address, pollProps, logger)
-
-      if (newId) {
-        navigate(getPollPath(newId))
-      }
-    } catch (ex) {
-      let exString = `${ex}`
-      if (exString.startsWith('Error: user rejected action')) {
-        exString = 'Signer refused to sign transaction.'
-      }
-      logger(`Failed to create poll: ${exString}`)
-    } finally {
-      setIsCreating(false)
-    }
-  }
-
-  const hasErrorsOnCurrentPage = collectErrorsInFields(stepFields[step])
+    },
+  })
 
   return {
-    stepTitle: StepTitles[step],
     stepIndex,
     numberOfSteps,
-    fields: stepFields[step],
-    previousStep: goToPreviousStep,
-    validationPending,
-    nextStep: goToNextStep,
-    isCreating,
-    hasErrorsOnCurrentPage,
-    createPoll,
+    fields: [title, intro, ...stepFields[step], [goToPreviousStep, goToNextStep, createPoll]],
   }
 }

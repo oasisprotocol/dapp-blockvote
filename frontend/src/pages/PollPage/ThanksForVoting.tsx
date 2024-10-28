@@ -2,12 +2,11 @@ import { FC } from 'react'
 import classes from './index.module.css'
 import { PollData } from './hook'
 import { BigCountdown } from './BigCountdown'
-import { Button } from '../../components/Button'
-import { RemainingTime } from '../../types'
 import { Card } from '../../components/Card'
 import { SocialShares } from '../../components/SocialShares'
 import { PollAccessIndicatorWrapper } from '../../components/PollCard/PollAccessIndicator'
 import { MotionDiv } from '../../components/Animations'
+import { InputFieldGroup } from '../../components/InputFields'
 
 const VoteIcon: FC = () => {
   return (
@@ -20,125 +19,19 @@ const VoteIcon: FC = () => {
   )
 }
 
-const StatusInfo: FC<{
-  remainingTime: RemainingTime | undefined
-  remainingTimeString: string | undefined
-  isMine: boolean | undefined
-  canComplete: boolean
-  complete: () => void
-  isCompleting: boolean
-  canDestroy: boolean
-  isDestroying: boolean
-  destroy: () => void
-}> = ({
-  remainingTime,
-  remainingTimeString,
-  isMine,
-  canComplete,
-  complete,
-  isCompleting,
-  canDestroy,
-  isDestroying,
-  destroy,
-}) => {
-  const handleComplete = () => {
-    if (canComplete && window.confirm("Are you you you want to complete this poll? This can't be undone.")) {
-      complete()
-    }
-  }
-
-  const handleDestroy = () => {
-    if (canDestroy && window.confirm("Are you you you want to destroy this poll? This can't be undone.")) {
-      destroy()
-    }
-  }
-
-  if (remainingTime) {
-    if (remainingTime.isPastDue) {
-      if (isMine) {
-        return (
-          <>
-            <h4>{remainingTimeString}</h4>
-            <h4>Voting results will be available when you complete the poll.</h4>
-            <div className={'niceLine'}>
-              <Button size={'small'} disabled={!canComplete} onClick={handleComplete} pending={isCompleting}>
-                {isCompleting ? 'Completing poll' : 'Complete poll'}
-              </Button>
-              <Button
-                size={'small'}
-                disabled={!canDestroy}
-                color={'secondary'}
-                onClick={handleDestroy}
-                pending={isDestroying}
-              >
-                {isDestroying ? 'Destroying poll' : 'Destroy poll'}
-              </Button>
-            </div>
-          </>
-        )
-      } else {
-        return (
-          <>
-            <h4>{remainingTimeString}</h4>
-            <h4>Voting results will be available when the owner formally completes the poll.</h4>
-          </>
-        )
-      }
-    } else {
-      return (
-        <>
-          <h4>Poll completes in:</h4>
-          <BigCountdown remainingTime={remainingTime} />
-        </>
-      )
-    }
-  } else {
-    if (isMine) {
-      return (
-        <>
-          <h4>Voting results will be available when you complete the poll.</h4>
-          <div className={'niceLine'}>
-            <Button size={'small'} disabled={!canComplete} onClick={handleComplete} pending={isCompleting}>
-              {isCompleting ? 'Completing poll' : 'Complete poll'}
-            </Button>
-            <Button
-              size={'small'}
-              disabled={!canDestroy}
-              color={'secondary'}
-              onClick={handleDestroy}
-              pending={isDestroying}
-            >
-              {isDestroying ? 'Destroying poll' : 'Destroy poll'}
-            </Button>
-          </div>
-        </>
-      )
-    } else {
-      return <h4>Voting results will be available when the owner completes the poll.</h4>
-    }
-  }
-}
-
 export const ThanksForVote: FC<PollData> = ({
   poll,
   existingVote: myVote,
   remainingTime,
-  remainingTimeString,
+  remainingTimeLabel,
   isMine,
   permissions,
   checkPermissions,
-  canComplete,
   completePoll,
-  isCompleting,
-  canDestroy,
-  isDestroying,
   destroyPoll,
+  resultsLabel,
 }) => {
-  const {
-    name,
-    // description,
-    choices,
-  } = poll!.ipfsParams
+  const { name, choices } = poll!.ipfsParams
   return (
     <Card>
       <h2>Thanks for voting!</h2>
@@ -153,7 +46,6 @@ export const ThanksForVote: FC<PollData> = ({
           />
         </div>
       </h4>
-      {/*<p>{description}</p>*/}
       <MotionDiv
         reason={'voteSubmitted'}
         layout
@@ -170,17 +62,18 @@ export const ThanksForVote: FC<PollData> = ({
         introText={'I just voted on this poll:'}
         pageTitle={name}
       />
-      <StatusInfo
-        remainingTime={remainingTime}
-        remainingTimeString={remainingTimeString}
-        isMine={isMine}
-        canComplete={canComplete}
-        complete={completePoll}
-        isCompleting={isCompleting}
-        canDestroy={canDestroy}
-        isDestroying={isDestroying}
-        destroy={destroyPoll}
-      />
+      {remainingTime && !remainingTime.isPastDue ? (
+        <>
+          <h4>Poll completes in:</h4>
+          <BigCountdown remainingTime={remainingTime} />
+          <InputFieldGroup fields={[[destroyPoll]]} expandHorizontally={false} />
+        </>
+      ) : (
+        <InputFieldGroup
+          fields={[remainingTimeLabel, resultsLabel, [completePoll, destroyPoll]]}
+          expandHorizontally={false}
+        />
+      )}
     </Card>
   )
 }

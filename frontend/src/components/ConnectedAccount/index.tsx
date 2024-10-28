@@ -36,10 +36,7 @@ export const ConnectedAccount: FC<Props> = ({ className, address, chainId }) => 
     >
       {isDesktopScreen ? (
         <div className={classes.connectedAccountDetails}>
-          <MaybeWithTooltip
-            overlay={shouldAnimate('walletExtend') ? undefined : chainDefinition.name}
-            placement={'top'}
-          >
+          {shouldAnimate('walletExtend') ? (
             <MotionDiv
               reason={'walletExtend'}
               layout
@@ -50,7 +47,12 @@ export const ConnectedAccount: FC<Props> = ({ className, address, chainId }) => 
               <img src={imageUrl} width={30} height={30} alt={'chain logo'} />
               {chainDefinition.name}
             </MotionDiv>
-          </MaybeWithTooltip>
+          ) : (
+            <MaybeWithTooltip overlay={chainDefinition.name} placement={'top'}>
+              <img src={imageUrl} width={30} height={30} alt={'chain logo'} />
+            </MaybeWithTooltip>
+          )}
+
           <JazzIcon size={30} address={address} />
           <AddressShower address={address} className={classes.connectedAccountAddress} />
         </div>

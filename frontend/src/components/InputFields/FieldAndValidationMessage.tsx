@@ -1,20 +1,21 @@
 import { AnimatePresence } from 'framer-motion'
 import { FC } from 'react'
-import { ProblemList } from './ProblemDisplay'
-import { Problem } from './util'
+import { FieldMessageList } from './FieldMessageDisplay'
+import { FieldMessage } from './util'
 import { InputFieldControls } from './useInputField'
 import { MotionDiv } from '../Animations'
+import { MarkdownBlock } from '../Markdown'
 
-export const ProblemAndValidationMessage: FC<
-  Pick<InputFieldControls<any>, 'validationPending' | 'validationStatusMessage' | 'clearProblem'> & {
-    problems: Problem[]
+export const FieldAndValidationMessage: FC<
+  Pick<InputFieldControls<any>, 'validationPending' | 'validationStatusMessage' | 'clearErrorMessage'> & {
+    messages: FieldMessage[]
   }
 > = props => {
-  const { validationPending, validationStatusMessage, problems, clearProblem } = props
+  const { validationPending, validationStatusMessage, messages, clearErrorMessage } = props
 
   return (
     <>
-      <ProblemList problems={problems} onRemove={clearProblem} />
+      <FieldMessageList messages={messages} onRemove={clearErrorMessage} />
       <AnimatePresence mode={'wait'}>
         {!!validationStatusMessage && validationPending && (
           <MotionDiv
@@ -26,7 +27,7 @@ export const ProblemAndValidationMessage: FC<
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, delay: 0 }}
           >
-            {validationStatusMessage}
+            <MarkdownBlock code={validationStatusMessage} />
           </MotionDiv>
         )}
       </AnimatePresence>

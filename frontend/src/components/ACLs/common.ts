@@ -1,9 +1,7 @@
-import { Choice, DecisionWithReason, FieldConfiguration } from '../InputFields'
+import { Choice, DecisionWithReason, ExecutionContext, FieldConfiguration } from '../InputFields'
 import { AclOptions, IPollACL } from '@oasisprotocol/blockvote-contracts'
 import { BytesLike } from 'ethers'
 import { MarkdownCode } from '../../types'
-
-export type StatusUpdater = (status: string | undefined) => void
 
 export type CheckPermissionResults = {
   canVote: DecisionWithReason
@@ -39,11 +37,11 @@ export type ACL<Name, ConfigInputValues, Options extends AclOptions> = Choice<Na
   getAclOptions:
     | ((
         config: ConfigInputValues,
-        statusUpdater?: StatusUpdater,
+        context?: ExecutionContext,
       ) => { data: string; options: Options; flags: bigint })
     | ((
         config: ConfigInputValues,
-        statusUpdater?: StatusUpdater,
+        context?: ExecutionContext,
       ) => Promise<{ data: string; options: Options; flags: bigint }>)
 
   /**
