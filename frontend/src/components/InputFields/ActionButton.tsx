@@ -24,7 +24,9 @@ export const ActionButton: FC<ActionControls<any>> = props => {
     event.stopPropagation()
     execute().then(
       result => {
-        console.log('Result on action button', name, ':', typeof result, result)
+        if (result !== undefined) {
+          console.log('Result on action button', name, ':', typeof result, result)
+        }
       },
       error => {
         if (error.message === 'User canceled action') {
