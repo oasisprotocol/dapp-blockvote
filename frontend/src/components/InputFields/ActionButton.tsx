@@ -7,6 +7,7 @@ import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
 
 export const ActionButton: FC<ActionControls<any>> = props => {
   const {
+    name,
     allMessages,
     size,
     color,
@@ -21,7 +22,18 @@ export const ActionButton: FC<ActionControls<any>> = props => {
   } = props
   const handleClick: MouseEventHandler = event => {
     event.stopPropagation()
-    void execute()
+    execute().then(
+      result => {
+        console.log('Result on action button', name, ':', typeof result, result)
+      },
+      error => {
+        if (error.message === 'User canceled action') {
+          // User didn't confirm, not an issue
+        } else {
+          console.log('Error on action button', name, ':', error)
+        }
+      },
+    )
   }
   return (
     <WithVisibility field={props}>

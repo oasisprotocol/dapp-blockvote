@@ -3,13 +3,7 @@ import { ButtonColor, ButtonSize, ButtonVariant } from '../Button'
 import { useState } from 'react'
 import { FieldLike } from './validation'
 import { MarkdownCode } from '../../types'
-
-type ActionContext = {
-  setPendingMessage: (message: MarkdownCode | undefined) => void
-  log: (message: MarkdownCode, ...optionalParams: any[]) => void
-  warn: (message: MarkdownCode, ...optionalParams: any[]) => void
-  error: (message: MarkdownCode, ...optionalParams: any[]) => void
-}
+import { ExecutionContext } from './ExecutionContext'
 
 export type ActionProps<ReturnData = void> = Omit<
   InputFieldProps<void>,
@@ -29,7 +23,8 @@ export type ActionProps<ReturnData = void> = Omit<
   size?: ButtonSize
   color?: ButtonColor
   variant?: ButtonVariant
-  action: (action: ActionContext) => ReturnData
+  confirmQuestion?: string | undefined
+  action: (context: ExecutionContext) => ReturnData
 }
 
 export type ActionControls<ReturnData> = FieldLike &
@@ -39,11 +34,12 @@ export type ActionControls<ReturnData> = FieldLike &
   > &
   Pick<ActionProps, 'color' | 'variant' | 'size'> & {
     pendingLabel: string | undefined
+    isPending: boolean
     execute: () => Promise<ReturnData>
   }
 
 export function useAction<ReturnType>(props: ActionProps<ReturnType>): ActionControls<ReturnType> {
-  const { color, variant, size, action, pendingLabel } = props
+  const { color, variant, size, action, pendingLabel, confirmQuestion } = props
   const controls = useInputFieldInternal(
     'action',
     { ...props, initialValue: undefined, showValidationPending: false },
@@ -53,10 +49,15 @@ export function useAction<ReturnType>(props: ActionProps<ReturnType>): ActionCon
   const [isPending, setIsPending] = useState(false)
   const [statusMessage, setStatusMessage] = useState<MarkdownCode | undefined>()
 
-  const execute = async (): Promise<ReturnType> => {
+  const doExecute = async (): Promise<ReturnType> => {
     setIsPending(true)
-    const context: ActionContext = {
-      setPendingMessage: message => setStatusMessage(message),
+    const context: ExecutionContext = {
+      setStatus: (message, seconds) => {
+        setStatusMessage(message)
+        if (seconds) {
+          console.log('This phase should take', seconds, 'seconds.') // TODO
+        }
+      },
       log: (message, optionalParams) =>
         controls.addMessage({
           text: [message, ...(optionalParams || [])].join(' '),
@@ -87,12 +88,25 @@ export function useAction<ReturnType>(props: ActionProps<ReturnType>): ActionCon
     }
   }
 
+  const execute = async (): Promise<ReturnType> => {
+    if (confirmQuestion) {
+      if (confirm(confirmQuestion)) {
+        return await doExecute()
+      } else {
+        throw new Error('User canceled action')
+      }
+    } else {
+      return await doExecute()
+    }
+  }
+
   return {
     ...controls,
     color,
     variant,
     size,
     pendingLabel,
+    isPending,
     validationPending: isPending,
     validationStatusMessage: statusMessage,
     execute,

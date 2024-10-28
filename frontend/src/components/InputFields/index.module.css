@@ -1,15 +1,12 @@
 .fieldRow,
 .fieldRowRight {
-  width: 100%;
+
   display: flex;
   align-content: center;
   /*align-items: center;*/
   overflow: hidden;
-  gap: 16px;
+  gap: 32px;
 
-  button {
-    width: 100%;
-  }
 }
 
 .fieldRow {
@@ -20,11 +17,26 @@
   flex-direction: row-reverse;
 }
 
-.fieldContainer {
+.fieldRowExpand {
   width: 100%;
+  button {
+    width: 100%;
+  }
+}
+
+.fieldRowCompact {
+  justify-content: center;
+}
+
+
+.fieldContainer {
   overflow-y: hidden;
   overflow-x: hidden;
   /*border: 1px solid green;*/
+}
+
+.fieldContainerExpand {
+  width: 100%;
 }
 
 .fieldLabelTag {
@@ -208,6 +220,13 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  width: 100%;
   overflow-x: hidden;
+}
+
+.fieldGroupExpand {
+  width: 100%;
+}
+
+.fieldGroupCompact {
+
 }

@@ -15,9 +15,9 @@ import { DateFieldControls } from './useDateField'
 import { ActionButton } from './ActionButton'
 import { ActionControls } from './useAction'
 
-export const InputField: FC<{ controls: Pick<InputFieldControls<any>, 'type' | 'name'> }> = ({
-  controls,
-}) => {
+export const InputField: FC<{
+  controls: Pick<InputFieldControls<any>, 'type' | 'name' | 'expandHorizontally'>
+}> = ({ controls }) => {
   switch (controls.type) {
     case 'text':
       return <TextInput {...(controls as TextFieldControls)} />

@@ -117,6 +117,13 @@ export type InputFieldProps<DataType> = {
   containerClassName?: string
 
   /**
+   * Should this field expand horizontally to take all available space?
+   *
+   * (Defaults to true)
+   */
+  expandHorizontally?: boolean
+
+  /**
    * Should this field be validated after every change?
    *
    * Default is false.
@@ -163,6 +170,7 @@ export type InputFieldControls<DataType> = Pick<
   enabled: boolean
   whyDisabled?: MarkdownCode
   containerClassName?: string
+  expandHorizontally: boolean
   value: DataType
   cleanValue: DataType
   setValue: (value: DataType) => void
@@ -272,6 +280,7 @@ export function useInputFieldInternal<DataType>(
     validators = [],
     validatorsGenerator,
     containerClassName,
+    expandHorizontally = true,
     validateOnChange,
     showValidationPending = true,
     showValidationSuccess = false,
@@ -467,6 +476,7 @@ export function useInputFieldInternal<DataType>(
     enabled: isEnabled,
     whyDisabled: isEnabled ? undefined : getReason(enabled),
     containerClassName,
+    expandHorizontally,
     addMessage,
   }
 }

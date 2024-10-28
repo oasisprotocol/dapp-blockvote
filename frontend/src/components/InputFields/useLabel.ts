@@ -2,12 +2,13 @@ import { InputFieldControls, InputFieldProps, useInputField } from './useInputFi
 import { getAsArray, SingleOrArray } from './util'
 import { ReactNode } from 'react'
 import { renderMarkdown, TagName } from '../Markdown'
+import { MarkdownCode } from '../../types'
 
 export type FormatterFunction<DataType> = (rawValue: DataType) => string
 
 export type RendererFunction<DataType> = (value: DataType | string, tagName: string) => ReactNode
 
-export type LabelProps<DataType = string> = Pick<
+export type LabelProps<DataType = MarkdownCode> = Pick<
   InputFieldProps<DataType>,
   | 'name'
   | 'label'
@@ -16,6 +17,7 @@ export type LabelProps<DataType = string> = Pick<
   | 'visible'
   | 'hidden'
   | 'containerClassName'
+  | 'expandHorizontally'
   | 'initialValue'
   | 'validators'
   | 'validateOnChange'

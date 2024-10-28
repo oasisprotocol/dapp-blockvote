@@ -1,5 +1,6 @@
 import { CheckPermissionResults, defineACL } from './common'
 import {
+  basicExecutionContext,
   Choice,
   DecisionWithReason,
   denyWithReason,
@@ -225,13 +226,15 @@ export const xchain = defineACL({
     }
   },
 
-  getAclOptions: async ({ chainId, contractAddress, slotNumber, blockHash, flags }, updateStatus) => {
-    const showStatus = updateStatus ?? ((message?: string | undefined) => console.log(message))
+  getAclOptions: async (
+    { chainId, contractAddress, slotNumber, blockHash, flags },
+    context = basicExecutionContext,
+  ) => {
     const rpc = xchainRPC(chainId)
-    showStatus('Getting block header RLP')
+    context.setStatus('Getting block header RLP')
     const headerRlpBytes = await getBlockHeaderRLP(rpc, blockHash)
     // console.log('headerRlpBytes', headerRlpBytes);
-    showStatus('Fetching account proof')
+    context.setStatus('Fetching account proof')
     const rlpAccountProof = await fetchAccountProof(rpc, blockHash, contractAddress)
     // console.log('rlpAccountProof', rlpAccountProof);
 
