@@ -7,7 +7,7 @@ const GasRequiredIcon: FC<{ linkAllowed: boolean }> = ({ linkAllowed }) => {
   const useLink = !!faucetUrl && linkAllowed
   const icon = (
     <MaybeWithTooltip
-      overlay={`Voting requires paying for some gas.${useLink ? ' Click here to get come' : ''}`}
+      overlay={`Voting requires paying for some gas.${useLink ? ' Click here to get some gas.' : ''}`}
     >
       <svg width="17" height="19" viewBox="0 0 17 19" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
