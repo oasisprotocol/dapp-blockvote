@@ -81,29 +81,6 @@ h3 {
   }
 }
 
-.landing-layout {
-  height: 100dvh;
-  background-image: url('background.svg');
-  background-size: 2000px 2000px;
-  background-position: center center;
-  background-repeat: no-repeat;
-  color: var(--navy-blue);
-}
-
-.dashboard-layout {
-  background: linear-gradient(180deg, #e6e5ff 0%, #d2d1ff 100%);
-}
-
-.dark-layout {
-  background: #130fff;
-  color: white;
-}
-
-.light-layout {
-  background: white;
-  color: var(--navy-blue);
-}
-
 .niceLine,
 .niceLineWide {
   display: flex;
