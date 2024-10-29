@@ -223,7 +223,7 @@ export const EthereumContextProvider: FC<PropsWithChildren> = ({ children }) => 
     },
     userAddress,
     isProviderAvailable: !!ethProvider,
-    isConnected: userAddress !== ZeroAddress,
+    isConnected: state.status === ConnectionStatus.Connected,
     isHomeChain,
     explorerBaseUrl,
     connectWallet: connect,
