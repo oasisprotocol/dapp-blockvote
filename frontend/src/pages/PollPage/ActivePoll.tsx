@@ -83,13 +83,15 @@ export const ActivePoll: FC<PollData> = ({
       <h2>
         <div className={'niceLine'}>
           {name}
-          <PollAccessIndicatorWrapper
-            isMine={isMine}
-            permissions={permissions}
-            isActive={true}
-            retest={checkPermissions}
-            hideRestrictedNoAccess={true}
-          />
+          {hasWallet && (
+            <PollAccessIndicatorWrapper
+              isMine={isMine}
+              permissions={permissions}
+              isActive={true}
+              retest={checkPermissions}
+              hideRestrictedNoAccess={true}
+            />
+          )}
         </div>
       </h2>
       <h4>{description}</h4>
