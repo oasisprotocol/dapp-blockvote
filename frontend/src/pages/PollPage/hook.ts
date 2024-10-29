@@ -16,13 +16,14 @@ import {
 } from '../../constants/config'
 import { useTime } from '../../hooks/useTime'
 import { tuneValue } from '../../utils/tuning'
-import { Decision, deny, getVerdict, useAction, useLabel } from '../../components/InputFields'
+import { Decision, deny, getVerdict, useAction, useLabel, useTextField } from '../../components/InputFields'
 import { useExtendedPoll } from '../../hooks/useExtendedPoll'
 import { useProposalFromChain } from '../../hooks/useProposalFromChain'
 import { useNavigate } from 'react-router-dom'
 import { isPollActive, shouldPublishVoters, shouldPublishVotes } from '../../types'
 import classes from './index.module.css'
 import { showGaslessPossible } from '../../components/icons/GasRequiredIcon'
+import { hasTextMatch } from '../../components/HighlightedText/text-matching'
 
 export const usePollData = (pollId: string) => {
   const navigate = useNavigate()
@@ -32,11 +33,15 @@ export const usePollData = (pollId: string) => {
   const [isVoting, setIsVoting] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
   const [hasCompleted, setHasCompleted] = useState(false)
-  const [selectedChoice, setSelectedChoice] = useState<bigint | undefined>()
+  const [selectedChoice, doSetSelectedChoice] = useState<bigint | undefined>()
   const [existingVote, setExistingVote] = useState<bigint | undefined>(undefined)
   const [isBusy, setIsBusy] = useState(false)
 
   const proposalId = `0x${pollId}`
+
+  const Exp = /^[0-9a-z]+$/
+
+  const isAlphanumeric = (char: string) => !!char.match(Exp)
 
   const {
     isLoading: isProposalLoading,
@@ -280,6 +285,52 @@ export const usePollData = (pollId: string) => {
     }
   }, [deadline, remainingTime, setDeadline])
 
+  const [isSearchVisible, setSearchVisible] = useState(false)
+
+  const choiceSearchInput = useTextField({
+    name: 'choiceSearch',
+    label: 'Search for option',
+    initialValue: '',
+    visible: isSearchVisible,
+    autoFocus: true,
+    onEnter: () => {
+      const matching = poll?.ipfsParams.choices
+        .map((choice, index) => ({ choice, index }))
+        .filter(o => hasTextMatch(o.choice, [choiceSearchPattern]))
+      // console.log('Matching choices are', matching)
+      if (matching?.length === 1) {
+        // console.log('Should select', matching[0])
+        setSelectedChoice(BigInt(matching[0].index))
+        choiceSearchInput.setValue('')
+      }
+    },
+  })
+
+  useEffect(() => setSearchVisible(!!choiceSearchInput.value), [choiceSearchInput.value])
+
+  const choiceSearchPattern = useMemo(
+    () => (choiceSearchInput.value.length ? choiceSearchInput.value : undefined),
+    [choiceSearchInput.value],
+  )
+
+  useEffect(() => {
+    // console.log('Should attach key handlers')
+
+    const processEvent = (event: KeyboardEvent): void => {
+      if (event.key.length === 1 && isAlphanumeric(event.key)) {
+        choiceSearchInput.setValue(choiceSearchInput.value + event.key)
+      }
+    }
+
+    if (!isSearchVisible) {
+      document.addEventListener('keypress', processEvent)
+    }
+    return () => {
+      // console.log('Remove handlers')
+      document.removeEventListener('keypress', processEvent)
+    }
+  }, [isSearchVisible])
+
   const doVote = useCallback(
     async (choice: bigint | undefined): Promise<void> => {
       if (choice === undefined) throw new Error('no choice selected')
@@ -488,6 +539,17 @@ export const usePollData = (pollId: string) => {
     }
   }, [hasCompleted, poll])
 
+  const setSelectedChoice = async (value: bigint | undefined) => {
+    if (designDecisions.showSubmitButton) {
+      doSetSelectedChoice(value)
+    } else {
+      doSetSelectedChoice(value)
+      if (value !== undefined) {
+        if (!(await vote(value))) doSetSelectedChoice(undefined)
+      }
+    }
+  }
+
   return {
     userAddress,
     hasWallet,
@@ -495,20 +557,14 @@ export const usePollData = (pollId: string) => {
     isLoading: isProposalLoading || isLoading,
     error: proposalError ?? error,
     poll,
+    choiceSearchInput,
+    choiceSearchPattern,
     active,
 
     selectedChoice: winningChoice ?? selectedChoice,
     canSelect,
-    setSelectedChoice: async (value: bigint | undefined) => {
-      if (designDecisions.showSubmitButton) {
-        setSelectedChoice(value)
-      } else {
-        setSelectedChoice(value)
-        if (value !== undefined) {
-          if (!(await vote(value))) setSelectedChoice(undefined)
-        }
-      }
-    },
+    setSelectedChoice,
+
     remainingTime,
     remainingTimeString,
     remainingTimeLabel,
