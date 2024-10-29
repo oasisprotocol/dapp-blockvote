@@ -1,6 +1,6 @@
 import { FC, useState } from 'react'
 import { METAMASK_HOME_PAGE_URL } from '../../constants/config'
-import { Button, ButtonSize } from '../Button'
+import { Button } from '../Button'
 import { UnknownNetworkError } from '../../utils/errors'
 import { ConnectedAccount } from '../ConnectedAccount'
 
@@ -10,10 +10,9 @@ import { useEthereum } from '../../hooks/useEthereum'
 interface Props {
   mobileSticky: boolean
   avoidButtonClasses?: boolean
-  buttonSize?: ButtonSize
 }
 
-export const ConnectWallet: FC<Props> = ({ mobileSticky, avoidButtonClasses = false, buttonSize }) => {
+export const ConnectWallet: FC<Props> = ({ mobileSticky, avoidButtonClasses = false }) => {
   const [isLoading, setIsLoading] = useState(false)
 
   const {
@@ -70,7 +69,7 @@ export const ConnectWallet: FC<Props> = ({ mobileSticky, avoidButtonClasses = fa
             className={avoidButtonClasses ? undefined : classes.connectWalletBtn}
             color={'primary'}
             disabled={isLoading}
-            size={buttonSize}
+            size={'medium'}
           >
             Install MetaMask
           </Button>
@@ -80,7 +79,7 @@ export const ConnectWallet: FC<Props> = ({ mobileSticky, avoidButtonClasses = fa
         <Button
           className={avoidButtonClasses ? undefined : classes.connectWalletBtn}
           color={'primary'}
-          size={buttonSize}
+          size={'small'}
           disabled={isLoading}
           onClick={handleSwitchNetwork}
         >
@@ -91,7 +90,7 @@ export const ConnectWallet: FC<Props> = ({ mobileSticky, avoidButtonClasses = fa
         <Button
           className={avoidButtonClasses ? undefined : classes.connectWalletBtn}
           color={'primary'}
-          size={buttonSize}
+          size={'small'}
           disabled={isLoading}
           onClick={handleConnectWallet}
         >

@@ -2,7 +2,7 @@ import { FC, useCallback } from 'react'
 import { Layout } from '../../components/Layout'
 import { ConnectWallet } from '../../components/ConnectWallet'
 import classes from './index.module.css'
-import { Button, ButtonSize } from '../../components/Button'
+import { Button } from '../../components/Button'
 import { useNavigate } from 'react-router-dom'
 import { appName } from '../../constants/config'
 import { getPollPath } from '../../utils/path.utils'
@@ -10,7 +10,6 @@ import { getPollPath } from '../../utils/path.utils'
 export const LandingPage: FC = () => {
   const navigate = useNavigate()
   const openDemo = useCallback(() => navigate(getPollPath('demo')), [])
-  const buttonSize: ButtonSize = 'small'
 
   return (
     <Layout variation={'landing'}>
@@ -21,10 +20,10 @@ export const LandingPage: FC = () => {
         To participate in a poll or create one, please connect your wallet. This ensures secure and verified
         interaction with the polling system.
         <div className={'niceLineWide noWrap'}>
-          <Button color={'secondary'} variant={'outline'} size={buttonSize} onClick={openDemo}>
+          <Button color={'secondary'} variant={'outline'} size={'small'} onClick={openDemo}>
             View Demo
           </Button>
-          <ConnectWallet mobileSticky={false} avoidButtonClasses={true} buttonSize={buttonSize} />
+          <ConnectWallet mobileSticky={false} avoidButtonClasses={true} />
         </div>
       </div>
     </Layout>
