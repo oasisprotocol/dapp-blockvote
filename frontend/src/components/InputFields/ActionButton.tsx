@@ -18,7 +18,7 @@ export const ActionButton: FC<ActionControls<any>> = props => {
     enabled,
     whyDisabled,
     description,
-    validationPending,
+    isPending,
   } = props
   const handleClick: MouseEventHandler = event => {
     event.stopPropagation()
@@ -46,10 +46,10 @@ export const ActionButton: FC<ActionControls<any>> = props => {
             size={size}
             color={color}
             onClick={handleClick}
-            pending={validationPending}
-            disabled={!enabled || validationPending}
+            pending={isPending}
+            disabled={!enabled || isPending}
           >
-            {validationPending ? (pendingLabel ?? label) : label}
+            {isPending ? (pendingLabel ?? label) : label}
           </Button>
         </MaybeWithTooltip>
       </WithValidation>
