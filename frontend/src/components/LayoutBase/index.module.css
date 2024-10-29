@@ -40,7 +40,15 @@
 
 @media screen and (max-width: 1000px) {
   .layout {
-    padding: 0 1.5rem 0.25rem;
+    padding: 0;
+  }
+
+  .main {
+    max-width: unset;
+  }
+
+  header {
+    padding: 0 1rem
   }
 
   .footer {
