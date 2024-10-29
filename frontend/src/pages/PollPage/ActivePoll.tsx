@@ -7,7 +7,7 @@ import { formatEther, parseEther } from 'ethers'
 import { ConnectWallet } from '../../components/ConnectWallet'
 import { Card } from '../../components/Card'
 import { SocialShares } from '../../components/SocialShares'
-import { getVerdict, getReason, InputFieldGroup } from '../../components/InputFields'
+import { getVerdict, getReason, InputFieldGroup, InputField } from '../../components/InputFields'
 import { PollAccessIndicatorWrapper } from '../../components/PollCard/PollAccessIndicator'
 import { designDecisions, nativeTokenSymbol } from '../../constants/config'
 import { SpinnerIcon } from '../../components/icons/SpinnerIcon'
@@ -16,6 +16,8 @@ import { MotionDiv } from '../../components/Animations'
 import { MarkdownBlock } from '../../components/Markdown'
 import { StringUtils } from '../../utils/string.utils'
 import { MaybeWithTooltip } from '../../components/Tooltip/MaybeWithTooltip'
+import { HighlightedText } from '../../components/HighlightedText'
+import { hasTextMatch } from '../../components/HighlightedText/text-matching'
 
 export const ActivePoll: FC<PollData> = ({
   hasWallet,
@@ -43,6 +45,8 @@ export const ActivePoll: FC<PollData> = ({
   publishVotesLabel,
   publishVotersLabel,
   resultsLabel,
+  choiceSearchInput,
+  choiceSearchPattern,
 }) => {
   const { name, description, choices } = poll!.ipfsParams
 
@@ -97,6 +101,7 @@ export const ActivePoll: FC<PollData> = ({
       <h4>{description}</h4>
       {(hasWallet || isPastDue) && (
         <AnimatePresence initial={false}>
+          <InputField controls={choiceSearchInput} />
           {choices.map((choice, index) =>
             !isVoting || selectedChoice === BigInt(index) ? (
               <MotionDiv
@@ -109,14 +114,17 @@ export const ActivePoll: FC<PollData> = ({
                 className={StringUtils.clsx(
                   classes.choice,
                   classes.darkChoice,
-                  canSelect || BigInt(index) === selectedChoice
+                  (canSelect || BigInt(index) === selectedChoice) &&
+                    (!choiceSearchPattern || hasTextMatch(choice, [choiceSearchPattern]))
                     ? classes.activeChoice
                     : classes.disabledChoice,
                   selectedChoice?.toString() === index.toString() ? classes.selectedChoice : undefined,
                 )}
                 onClick={() => handleSelect(index)}
               >
-                <div className={classes.above}>{choice}</div>
+                <div className={classes.above}>
+                  <HighlightedText text={choice} patterns={[choiceSearchPattern]} />
+                </div>
                 {!designDecisions.showSubmitButton && isVoting && <SpinnerIcon spinning height="30" />}
               </MotionDiv>
             ) : undefined,
