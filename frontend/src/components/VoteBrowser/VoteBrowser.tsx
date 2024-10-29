@@ -6,8 +6,30 @@ import { HighlightedText } from '../HighlightedText'
 import classes from './index.module.css'
 import { useEthereum } from '../../hooks/useEthereum'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
+import { StringUtils } from '../../utils/string.utils'
+import { configuredExplorerUrl } from '../../constants/config'
+import { findTextMatches } from '../HighlightedText/text-matching'
 
 const VOTES_ON_PAGE = 10
+
+export const AccountName: FC<{
+  address: string
+  name: string | undefined
+  searchPatterns: string[]
+}> = ({ address, name, searchPatterns }) => {
+  const preparedAddress = StringUtils.truncateAddress(address)
+  const label = name ? `${name} (${preparedAddress})` : address
+  const url = StringUtils.getAccountUrl(configuredExplorerUrl, address)
+  const matchHidden =
+    findTextMatches(address, searchPatterns).length !==
+    findTextMatches(preparedAddress, searchPatterns).length
+  const highlightPatterns = matchHidden ? [...searchPatterns, preparedAddress] : searchPatterns
+  return (
+    <a href={url} target={'_blank'}>
+      <HighlightedText text={label} patterns={highlightPatterns} />
+    </a>
+  )
+}
 
 export const VoteBrowser: FC<{ choices: ListOfChoices; votes: ListOfVotes; totalVotes: bigint }> = ({
   choices,
@@ -29,7 +51,7 @@ export const VoteBrowser: FC<{ choices: ListOfChoices; votes: ListOfVotes; total
     clearFilters,
   } = useVoteBrowserData(choices, votes, totalVotes, VOTES_ON_PAGE)
 
-  console.log('user address is', userAddress)
+  // console.log('user address is', userAddress)
 
   return (
     <div className={classes.voteBrowser}>
@@ -47,14 +69,14 @@ export const VoteBrowser: FC<{ choices: ListOfChoices; votes: ListOfVotes; total
           </thead>
           <tbody>
             {displayedVotes.map(vote => {
-              const { voter, weight, choiceString } = vote
-              const mine = voter.toLowerCase() === userAddress.toLowerCase()
+              const { address, name, weight, choiceString } = vote
+              const mine = address.toLowerCase() === userAddress.toLowerCase()
               return (
-                <tr key={voter}>
-                  <td className={mine ? classes.myVote : undefined}>
+                <tr key={address}>
+                  <td className={mine && displayedVotes.length > 1 ? classes.myVote : undefined}>
                     <MaybeWithTooltip overlay={mine ? 'This is my vote' : undefined}>
                       <span>
-                        <HighlightedText text={voter} patterns={searchPatterns} />
+                        <AccountName address={address} name={name} searchPatterns={searchPatterns} />
                         {mine && ' 🛈'}
                       </span>
                     </MaybeWithTooltip>

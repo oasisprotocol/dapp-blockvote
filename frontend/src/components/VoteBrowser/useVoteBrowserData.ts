@@ -3,9 +3,12 @@ import { Choice, FieldConfiguration, useOneOfField, useTextField } from '../Inpu
 import { useMemo, useState } from 'react'
 import { findTextMatches } from '../HighlightedText/text-matching'
 import { StringUtils } from '../../utils/string.utils'
+import { useAllAccountsMetadata } from '../../hooks/namedAccounts'
+import { VITE_NETWORK_NUMBER } from '../../constants/config'
 
 type Vote = {
-  voter: string
+  address: string
+  name: string | undefined
   weight: bigint
   choiceIndex: string
   choiceString: string
@@ -43,10 +46,12 @@ export const useVoteBrowserData = (
 
   const addressSearchPatternInput = useTextField({
     name: 'addressSearchPattern',
-    placeholder: 'Search for address',
+    placeholder: 'Search for voter',
     autoFocus: true,
     onValueChange: goToFirstPage,
   })
+
+  const chainAccountsMetadata = useAllAccountsMetadata(VITE_NETWORK_NUMBER, true)
 
   const searchPatterns = useMemo(() => {
     const patterns = addressSearchPatternInput.value
@@ -65,13 +70,14 @@ export const useVoteBrowserData = (
       votes.out_voters.map((voter, index): Vote => {
         const [weight, choice] = votes.out_choices[index]
         return {
-          voter,
+          address: voter,
+          name: chainAccountsMetadata?.map.get(voter)?.name,
           weight,
           choiceIndex: choice.toString(),
           choiceString: choices[choice.toString()].choice,
         }
       }),
-    [votes],
+    [votes, chainAccountsMetadata],
   )
 
   const filteredVotes = useMemo(
@@ -79,7 +85,8 @@ export const useVoteBrowserData = (
       allVotes.filter(vote => {
         if (choiceSelector.value !== 'all' && vote.choiceIndex !== choiceSelector.value) return false
 
-        const textMatches = searchPatterns.length ? findTextMatches(vote.voter, searchPatterns) : []
+        const corpus = `${vote.address} ||| ${vote.name?.toLowerCase() ?? ''}`
+        const textMatches = searchPatterns.length ? findTextMatches(corpus, searchPatterns) : []
         const hasAllMatches = textMatches.length === searchPatterns.length
         if (!hasAllMatches) return false
 

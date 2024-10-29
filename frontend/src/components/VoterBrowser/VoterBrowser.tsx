@@ -2,10 +2,10 @@ import { FC } from 'react'
 import { ListOfVoters } from '../../types'
 import { useVoterBrowserData } from './useVoterBrowserData'
 import { InputFieldGroup } from '../InputFields'
-import { HighlightedText } from '../HighlightedText'
 import classes from './index.module.css'
 import { useEthereum } from '../../hooks/useEthereum'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
+import { AccountName } from '../VoteBrowser/VoteBrowser'
 
 const VOTES_ON_PAGE = 10
 
@@ -39,14 +39,15 @@ export const VoterBrowser: FC<{ voters: ListOfVoters }> = ({ voters }) => {
           </thead>
           <tbody>
             {displayedVoters.map(voter => {
-              const mine = voter.toLowerCase() === userAddress.toLowerCase()
+              const { address, name } = voter
+              const mine = voter.address.toLowerCase() === userAddress.toLowerCase()
               return (
-                <tr key={voter}>
+                <tr key={voter.address}>
                   <td className={mine && displayedVoters.length > 1 ? classes.myVote : undefined}>
                     <MaybeWithTooltip overlay={mine ? 'This is my vote' : undefined}>
                       <span>
-                        <HighlightedText text={voter} patterns={searchPatterns} />
-                        {mine && <span className={classes.myVote}>🛈</span>}
+                        <AccountName address={address} name={name} searchPatterns={searchPatterns} />
+                        {mine && ' 🛈'}
                       </span>
                     </MaybeWithTooltip>
                   </td>

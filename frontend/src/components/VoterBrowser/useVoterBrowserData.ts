@@ -2,6 +2,8 @@ import { ListOfVoters } from '../../types'
 import { FieldConfiguration, useTextField } from '../InputFields'
 import { useMemo, useState } from 'react'
 import { findTextMatches } from '../HighlightedText/text-matching'
+import { useAllAccountsMetadata } from '../../hooks/namedAccounts'
+import { VITE_NETWORK_NUMBER } from '../../constants/config'
 
 export const useVoterBrowserData = (voters: ListOfVoters, pageSize: number) => {
   const [pageNumber, setPageNumber] = useState(1)
@@ -9,10 +11,12 @@ export const useVoterBrowserData = (voters: ListOfVoters, pageSize: number) => {
 
   const addressSearchPatternInput = useTextField({
     name: 'addressSearchPattern',
-    placeholder: 'Search for address',
+    placeholder: 'Search for voter',
     autoFocus: true,
     onValueChange: goToFirstPage,
   })
+
+  const chainAccountsMetadata = useAllAccountsMetadata(VITE_NETWORK_NUMBER, true)
 
   const searchPatterns = useMemo(() => {
     const patterns = addressSearchPatternInput.value
@@ -26,12 +30,16 @@ export const useVoterBrowserData = (voters: ListOfVoters, pageSize: number) => {
     }
   }, [addressSearchPatternInput.value])
 
-  const allVoters = voters.out_voters
+  const allVoters = voters.out_voters.map(voter => ({
+    address: voter,
+    name: chainAccountsMetadata?.map.get(voter)?.name,
+  }))
 
   const filteredVoters = useMemo(
     () =>
       allVoters.filter(voter => {
-        const textMatches = searchPatterns.length ? findTextMatches(voter, searchPatterns) : []
+        const corpus = `${voter.address} ||| ${voter.name?.toLowerCase() ?? ''}`
+        const textMatches = searchPatterns.length ? findTextMatches(corpus, searchPatterns) : []
         const hasAllMatches = textMatches.length === searchPatterns.length
         if (!hasAllMatches) return false
 
