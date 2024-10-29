@@ -158,7 +158,9 @@ export const ActivePoll: FC<PollData> = ({
         fields={[[gaslessLabel, voteAction, completePoll, destroyPoll]]}
         expandHorizontally={false}
       />
-      {!hasWallet && !isPastDue && <ConnectWallet mobileSticky={false} buttonSize={'small'} />}
+      {!hasWallet && !isPastDue && (
+        <ConnectWallet mobileSticky={false} buttonSize={'small'} avoidButtonClasses={true} />
+      )}
       {isMine && gaslessEnabled && hasWallet && (
         <div>
           <h4>Gasless voting enabled:</h4>
