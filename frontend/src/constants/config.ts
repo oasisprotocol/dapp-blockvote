@@ -29,6 +29,7 @@ export const configuredExplorerUrl = configuredExplorer?.url
 export const configuredNetworkName = configuredChain.name
 export const nativeTokenName = configuredChain.nativeCurrency.name
 export const nativeTokenSymbol = configuredChain.nativeCurrency.symbol
+export const faucetUrl = configuredChain.faucets?.[0]
 
 // const VITE_REACT_APP_BUILD_DATETIME = Number(ENV_VITE_REACT_APP_BUILD_DATETIME) ?? 0
 
