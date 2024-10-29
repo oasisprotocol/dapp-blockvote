@@ -8,13 +8,14 @@ import { ConnectWallet } from '../../components/ConnectWallet'
 import { Card } from '../../components/Card'
 import { SocialShares } from '../../components/SocialShares'
 import { getVerdict, getReason, InputFieldGroup } from '../../components/InputFields'
-import { WarningCircleIcon } from '../../components/icons/WarningCircleIcon'
 import { PollAccessIndicatorWrapper } from '../../components/PollCard/PollAccessIndicator'
 import { designDecisions, nativeTokenSymbol } from '../../constants/config'
 import { SpinnerIcon } from '../../components/icons/SpinnerIcon'
 import { AnimatePresence } from 'framer-motion'
 import { MotionDiv } from '../../components/Animations'
 import { MarkdownBlock } from '../../components/Markdown'
+import { StringUtils } from '../../utils/string.utils'
+import { MaybeWithTooltip } from '../../components/Tooltip/MaybeWithTooltip'
 
 export const ActivePoll: FC<PollData> = ({
   hasWallet,
@@ -75,6 +76,7 @@ export const ActivePoll: FC<PollData> = ({
 
   const { canVote: canAclVote, explanation: aclExplanation } = permissions
 
+  const canVote = getVerdict(canAclVote, false)
   // console.log("selected:", selectedChoice, "can select?", canSelect, "can Vote?", canVote, "voting?", isVoting)
   return (
     <Card className={classes.darkCard}>
@@ -102,7 +104,12 @@ export const ActivePoll: FC<PollData> = ({
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.5 }}
                 key={`choice-${index}`}
-                className={`${classes.choice} ${classes.darkChoice} ${canSelect ? classes.activeChoice : ''} ${selectedChoice?.toString() === index.toString() ? classes.selectedChoice : ''}`}
+                className={StringUtils.clsx(
+                  classes.choice,
+                  classes.darkChoice,
+                  canSelect ? classes.activeChoice : undefined,
+                  selectedChoice?.toString() === index.toString() ? classes.selectedChoice : undefined,
+                )}
                 onClick={() => handleSelect(index)}
               >
                 <div className={classes.above}>{choice}</div>
@@ -116,49 +123,35 @@ export const ActivePoll: FC<PollData> = ({
         fields={[walletLabel, remainingTimeLabel, publishVotesLabel, publishVotersLabel, resultsLabel]}
         expandHorizontally={false}
       />
-      {hasWallet && !getVerdict(canAclVote, false) ? (
+      {hasWallet && !canVote ? (
         <AnimatePresence>
-          <MotionDiv
-            title={correctiveAction ? 'Click to check again' : undefined}
-            reason={'permissionWarning'}
-            key={'warning-icon'}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            onClick={() => {
-              if (correctiveAction) {
-                console.log('Retrying')
-                correctiveAction()
-              } else {
-                console.log('no corrective action')
-              }
-            }}
-          >
-            {permissionsPending ? (
-              <SpinnerIcon size={'large'} spinning />
-            ) : (
-              <WarningCircleIcon size={'large'} />
-            )}
-          </MotionDiv>
-          <MotionDiv
-            reason={'permissionWarning'}
-            key={'warning-message'}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-          >
-            <MarkdownBlock
-              mainTag={'h4'}
-              code={`You can't vote on this poll, since ${getReason(canAclVote) as string}.`}
-            />
-          </MotionDiv>
+          <MaybeWithTooltip overlay={correctiveAction ? 'Click to check again' : undefined}>
+            <div
+              className={StringUtils.clsx(canVote ? undefined : classes.whyNoVote, 'niceLine')}
+              key={'warning-message'}
+              onClick={() => {
+                if (correctiveAction) {
+                  console.log('Retrying')
+                  correctiveAction()
+                } else {
+                  console.log('no corrective action')
+                }
+              }}
+            >
+              {permissionsPending && <SpinnerIcon size={'medium'} spinning />}
+              <MarkdownBlock
+                mainTag={'h4'}
+                code={`You can't vote on this poll, since ${getReason(canAclVote) as string}.`}
+              />
+            </div>
+          </MaybeWithTooltip>
         </AnimatePresence>
       ) : (
         aclExplanation && (
-          <>
+          <div className={canVote ? undefined : classes.whyNoVote}>
             <MarkdownBlock code={aclExplanation} mainTag={'h4'} />
-            {getVerdict(canAclVote, false) && <h4>You have access.</h4>}
-          </>
+            {canVote && <h4>You have access.</h4>}
+          </div>
         )
       )}
       <InputFieldGroup
