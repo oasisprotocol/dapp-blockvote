@@ -161,6 +161,7 @@ export const usePollData = (pollId: string) => {
   const gaslessLabel = useLabel<boolean | undefined>({
     name: 'gaslessIndicator',
     value: gaslessPossible,
+    visible: getVerdict(permissions.canVote, false),
     renderer: showGaslessPossible,
   })
 
