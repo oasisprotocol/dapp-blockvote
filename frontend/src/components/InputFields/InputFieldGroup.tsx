@@ -29,35 +29,36 @@ export const InputFieldGroup: FC<InputFieldGroupProps> = ({
   fields,
   alignRight,
   expandHorizontally = true,
-}) => (
-  <div
-    className={StringUtils.clsx(
-      classes.fieldGroup,
-      expandHorizontally ? classes.fieldGroupExpand : classes.fieldGroupCompact,
-    )}
-  >
-    {fields.map((row, index) =>
-      Array.isArray(row) ? (
-        <WithVisibility
-          key={`field-${index}`}
-          field={{
-            visible: row.some(controls => controls.visible),
-            name: `group-${index}`,
-            containerClassName: StringUtils.clsx(
-              alignRight ? classes.fieldRowRight : classes.fieldRow,
-              expandHorizontally ? classes.fieldRowExpand : classes.fieldRowCompact,
-            ),
-            expandHorizontally: expandHorizontally,
-          }}
-          padding={false}
-        >
-          {row.map(field => (
-            <InputField key={field.name} controls={{ ...(field as any), expandHorizontally }} />
-          ))}
-        </WithVisibility>
-      ) : (
-        <InputField key={row.name} controls={row as InputFieldControls<any>} />
-      ),
-    )}
-  </div>
-)
+}) =>
+  fields.some(row => (Array.isArray(row) ? row.some(col => col.visible) : row.visible)) ? (
+    <div
+      className={StringUtils.clsx(
+        classes.fieldGroup,
+        expandHorizontally ? classes.fieldGroupExpand : classes.fieldGroupCompact,
+      )}
+    >
+      {fields.map((row, index) =>
+        Array.isArray(row) ? (
+          <WithVisibility
+            key={`field-${index}`}
+            field={{
+              visible: row.some(controls => controls.visible),
+              name: `group-${index}`,
+              containerClassName: StringUtils.clsx(
+                alignRight ? classes.fieldRowRight : classes.fieldRow,
+                expandHorizontally ? classes.fieldRowExpand : classes.fieldRowCompact,
+              ),
+              expandHorizontally: expandHorizontally,
+            }}
+            padding={false}
+          >
+            {row.map(field => (
+              <InputField key={field.name} controls={{ ...(field as any), expandHorizontally }} />
+            ))}
+          </WithVisibility>
+        ) : (
+          <InputField key={row.name} controls={row as InputFieldControls<any>} />
+        ),
+      )}
+    </div>
+  ) : undefined
