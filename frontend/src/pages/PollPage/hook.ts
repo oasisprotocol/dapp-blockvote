@@ -83,7 +83,6 @@ export const usePollData = (pollId: string) => {
 
   const remainingTimeLabel = useLabel({
     name: 'remainingTime',
-    visible: !!remainingTimeString,
     value: remainingTimeString ?? '',
     tagName: 'h4',
     expandHorizontally: false,
