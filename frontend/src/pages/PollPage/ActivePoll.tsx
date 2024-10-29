@@ -109,7 +109,9 @@ export const ActivePoll: FC<PollData> = ({
                 className={StringUtils.clsx(
                   classes.choice,
                   classes.darkChoice,
-                  canSelect ? classes.activeChoice : classes.disabledChoice,
+                  canSelect || BigInt(index) === selectedChoice
+                    ? classes.activeChoice
+                    : classes.disabledChoice,
                   selectedChoice?.toString() === index.toString() ? classes.selectedChoice : undefined,
                 )}
                 onClick={() => handleSelect(index)}
