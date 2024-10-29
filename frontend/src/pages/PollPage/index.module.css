@@ -75,6 +75,11 @@
   box-shadow: 0 7px 7px 0 rgba(0, 0, 0, 0.17);
 }
 
+.disabledChoice {
+  cursor: not-allowed;
+  color: #abadb5;
+}
+
 .countdownContainer {
   display: flex;
   flex-direction: row;
@@ -124,4 +129,13 @@
 
   background: #d2d1ff;
   border-radius: 8px;
+}
+
+.whyNoVote {
+  margin-top: 1em;
+  border: 1px solid #ed6c02;
+  border-radius: 8px;
+  background: #ffe0c7;
+  padding: 1em;
+
 }

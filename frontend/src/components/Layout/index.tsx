@@ -13,10 +13,10 @@ import { Link, useLocation } from 'react-router-dom'
 type LayoutVariation = 'landing' | 'dashboard' | 'light' | 'dark'
 
 const layoutClasses: Partial<Record<LayoutVariation, string>> = {
-  landing: 'landing-layout',
-  dashboard: 'dashboard-layout',
-  dark: 'dark-layout',
-  light: 'light-layout',
+  landing: classes.landingLayout,
+  dashboard: classes.dashboardLayout,
+  dark: classes.darkLayout,
+  light: classes.lightLayout,
 }
 
 const logoColor: Record<LayoutVariation, string> = {

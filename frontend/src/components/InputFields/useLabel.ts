@@ -76,11 +76,13 @@ export function useLabel<DataType = MarkdownCode>(props: LabelProps<DataType>): 
   )
 
   const renderedContent = renderer(value, tagName)
+  const visible = controls.visible && controls.value !== ''
 
   return {
     ...controls,
     value,
     classnames: getAsArray(classnames),
     renderedContent,
+    visible,
   }
 }
