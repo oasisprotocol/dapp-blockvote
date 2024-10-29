@@ -22,3 +22,11 @@
     color: #01001f;
   }
 }
+
+@media screen and (max-width: 1000px) {
+  .landing {
+    width: unset;
+    left: unset;
+    padding: 1rem;
+  }
+}
