@@ -408,9 +408,7 @@ export const chain_info: Record<number, ChainDefinition> = {
         standard: 'EIP3091',
       },
     ],
-    faucets: [
-      'mailto:contact@delta-dao.com?subject=Request%20test%20tokens%20for%20Pontus-X%20Testnet',
-    ],
+    faucets: ['https://portal.pontus-x.eu/faucet'],
   },
   23295: {
     chainId: 0x5aff,
