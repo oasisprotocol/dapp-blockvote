@@ -1,18 +1,18 @@
-.dark-layout {
+.darkLayout {
   background: #130fff;
   color: white;
 }
 
-.light-layout {
+.lightLayout {
   background: white;
   color: var(--navy-blue);
 }
 
-.dashboard-layout {
+.dashboardLayout {
   background: linear-gradient(180deg, #e6e5ff 0%, #d2d1ff 100%);
 }
 
-.landing-layout {
+.landingLayout {
   height: 100dvh;
   background-image: url('background.svg');
   background-size: 2000px 2000px;
