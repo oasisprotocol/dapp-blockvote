@@ -2,8 +2,7 @@ import { isPollActive, Proposal } from '../../types'
 import { FC, MouseEventHandler, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import classes from './index.module.css'
-import { GasRequiredIcon } from '../icons/GasRequiredIcon'
-import { NoGasRequiredIcon } from '../icons/NoGasRequiredIcon'
+import { showGaslessPossible } from '../icons/GasRequiredIcon'
 import { SpinnerIcon } from '../icons/SpinnerIcon'
 import { HourGlassIcon } from '../icons/HourGlassIcon'
 import { StringUtils } from '../../utils/string.utils'
@@ -58,17 +57,6 @@ const PollStatusIndicator: FC<{ active: boolean; isPastDue: boolean }> = ({ acti
     </MaybeWithTooltip>
   )
 }
-
-const GaslessStatusIndicator: FC<{ possible: boolean | undefined }> = ({ possible }) =>
-  possible === undefined ? (
-    <SpinnerIcon size={'medium'} spinning />
-  ) : possible ? (
-    designDecisions.hideGaslessIndicator ? undefined : (
-      <NoGasRequiredIcon />
-    )
-  ) : (
-    <GasRequiredIcon />
-  )
 
 export const PollCard: FC<{
   column: Column
@@ -213,7 +201,7 @@ export const PollCard: FC<{
               <div dangerouslySetInnerHTML={{ __html: highlightedDescription }} />
               <div className={classes.pollCardBottom}>
                 <PollStatusIndicator active={active} isPastDue={isPastDue} />
-                {dashboard.showGasless && <GaslessStatusIndicator possible={gaslessPossible} />}
+                {dashboard.showGasless ? showGaslessPossible(gaslessPossible) : undefined}
               </div>
             </div>
           </Link>

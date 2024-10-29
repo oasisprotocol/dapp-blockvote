@@ -161,7 +161,7 @@ export const usePollData = (pollId: string) => {
     name: 'gaslessIndicator',
     value: gaslessPossible,
     visible: getVerdict(permissions.canVote, false),
-    renderer: showGaslessPossible,
+    renderer: possible => showGaslessPossible(possible, true),
   })
 
   const voteAction = useAction({
