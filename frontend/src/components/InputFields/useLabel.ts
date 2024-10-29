@@ -76,7 +76,7 @@ export function useLabel<DataType = MarkdownCode>(props: LabelProps<DataType>): 
   )
 
   const renderedContent = renderer(value, tagName)
-  const visible = controls.visible && controls.value !== ''
+  const visible = controls.visible && value !== ''
 
   return {
     ...controls,
