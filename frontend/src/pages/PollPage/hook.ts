@@ -299,10 +299,8 @@ export const usePollData = (pollId: string) => {
       const matching = poll?.ipfsParams.choices
         .map((choice, index) => ({ choice, index }))
         .filter(o => hasTextMatch(o.choice, [choiceSearchPattern]))
-      // console.log('Matching choices are', matching)
       if (matching?.length === 1) {
-        // console.log('Should select', matching[0])
-        setSelectedChoice(BigInt(matching[0].index))
+        void setSelectedChoice(BigInt(matching[0].index))
         choiceSearchInput.setValue('')
       }
     },
