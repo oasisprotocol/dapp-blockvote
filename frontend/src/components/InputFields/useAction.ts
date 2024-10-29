@@ -89,6 +89,9 @@ export function useAction<ReturnType>(props: ActionProps<ReturnType>): ActionCon
   }
 
   const execute = async (): Promise<ReturnType> => {
+    if (isPending) {
+      throw new Error(`Action ${props.name} is already running!`)
+    }
     if (confirmQuestion) {
       if (confirm(confirmQuestion)) {
         return await doExecute()
