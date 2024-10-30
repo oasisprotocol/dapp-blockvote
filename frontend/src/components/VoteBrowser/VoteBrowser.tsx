@@ -18,7 +18,7 @@ export const AccountName: FC<{
   searchPatterns: string[]
 }> = ({ address, name, searchPatterns }) => {
   const preparedAddress = StringUtils.truncateAddress(address)
-  const label = name ? `${name} (${preparedAddress})` : address
+  const label = name ? `${name} (${preparedAddress})` : preparedAddress
   const url = StringUtils.getAccountUrl(configuredExplorerUrl, address)
   const matchHidden =
     findTextMatches(address, searchPatterns).length !==
