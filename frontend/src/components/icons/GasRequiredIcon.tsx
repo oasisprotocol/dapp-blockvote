@@ -28,7 +28,7 @@ const GasRequiredIcon: FC<{ linkAllowed: boolean }> = ({ linkAllowed }) => {
 }
 
 export const showGaslessPossible = (gaslessPossible: boolean | undefined, linkAllowed = false) =>
-  gaslessPossible ? (
+  gaslessPossible === undefined ? undefined : gaslessPossible ? (
     designDecisions.hideGaslessIndicator ? undefined : (
       <NoGasRequiredIcon />
     )
