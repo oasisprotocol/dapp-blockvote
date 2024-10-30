@@ -131,11 +131,18 @@
   border-radius: 8px;
 }
 
-.whyNoVote {
+.voteError {
   margin-top: 1em;
   border: 1px solid #ed6c02;
   border-radius: 8px;
   background: #ffe0c7;
   padding: 1em;
+}
 
+.voteWarning {
+  margin-top: 1em;
+  border: 1px solid chocolate;
+  border-radius: 8px;
+  background: #ffe8c0;
+  padding: 1em;
 }

@@ -139,7 +139,7 @@ export const ActivePoll: FC<PollData> = ({
         <AnimatePresence>
           <MaybeWithTooltip overlay={correctiveAction ? 'Click to check again' : undefined}>
             <div
-              className={StringUtils.clsx(canVote ? undefined : classes.whyNoVote, 'niceLine')}
+              className={StringUtils.clsx(canVote ? undefined : classes.voteError, 'niceLine')}
               key={'warning-message'}
               onClick={() => {
                 if (correctiveAction) {
@@ -160,7 +160,7 @@ export const ActivePoll: FC<PollData> = ({
         </AnimatePresence>
       ) : (
         aclExplanation && (
-          <div className={canVote ? undefined : classes.whyNoVote}>
+          <div className={canVote ? undefined : classes.voteError}>
             <MarkdownBlock code={aclExplanation} mainTag={'h4'} />
             {canVote && <h4>You have access.</h4>}
           </div>
