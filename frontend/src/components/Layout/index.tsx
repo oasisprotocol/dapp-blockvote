@@ -61,7 +61,7 @@ export const Layout: FC<
           )}
         >
           <Link to={'/'}>
-            <LogoIcon className={classes.logo} color={logoColor[variation]} />
+            <LogoIcon color={logoColor[variation]} />
           </Link>
           {extraWidget ? (
             <div className={'niceLineWide'}>

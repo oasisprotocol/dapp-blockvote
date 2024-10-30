@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { dashboard, designDecisions } from '../../constants/config'
 import classes from './index.module.css'
 import { getPollPath } from '../../utils/path.utils'
+import { useAppState } from '../../hooks/useAppState'
 
 const FETCH_BATCH_SIZE = 100
 
@@ -153,6 +154,9 @@ async function fetchProposals(
 DashboardData.export()
 
 export const useDashboardData = () => {
+  const {
+    state: { isMobileScreen },
+  } = useAppState()
   const eth = useEthereum()
   const { pollManager, pollManagerAddress: daoAddress, pollManagerACL } = useContracts()
 
@@ -218,7 +222,7 @@ export const useDashboardData = () => {
     label: "Show polls I don't have access to",
     visible: dashboard.showPermissions && designDecisions.showInaccessiblePollCheckbox,
     initialValue: dashboard.showPermissions && designDecisions.showInaccessiblePollCheckbox,
-    containerClassName: classes.showInaccessible,
+    containerClassName: isMobileScreen ? undefined : classes.showInaccessible,
   })
 
   const wantedPollStatus = useOneOfField({
@@ -228,16 +232,16 @@ export const useDashboardData = () => {
       { value: 'active', label: 'Active polls' },
       { value: 'completed', label: 'Completed polls' },
     ],
-    containerClassName: classes.openCompletePolls,
+    containerClassName: isMobileScreen ? undefined : classes.openCompletePolls,
   } as const)
 
   const navigate = useNavigate()
 
   const pollSearchPatternInput = useTextField({
     name: 'pollSearchPattern',
-    placeholder: 'Start typing here to search for poll',
+    placeholder: isMobileScreen ? 'Type here' : 'Start typing here to search for poll',
     autoFocus: true,
-    containerClassName: classes.search,
+    containerClassName: isMobileScreen ? undefined : classes.search,
     onEnter: () => {
       const cards = allVisiblePollIds
       if (cards.length !== 1) return // We can only do this is there is exactly one matching card

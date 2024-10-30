@@ -21,6 +21,7 @@
     font-weight: 500;
     font-size: 17px;
     line-height: 24px;
+    text-align: left;
   }
 }
 
@@ -66,4 +67,11 @@ h4.activePollTitle {
 .pollStatusCompleted {
   background: #e7e7e9;
   color: #414749;
+}
+
+@media screen and (max-width: 1000px) {
+  .pollCard {
+    border-radius: unset;
+    border: unset;
+  }
 }

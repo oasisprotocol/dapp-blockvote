@@ -27,6 +27,7 @@ import { Button } from '../Button'
 import { MotionDiv } from '../Animations'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
 import { getPollPath } from '../../utils/path.utils'
+import { useAppState } from '../../hooks/useAppState'
 
 const Arrow: FC<{ className: string }> = ({ className }) => (
   <svg
@@ -66,6 +67,9 @@ export const PollCard: FC<{
   searchPatterns: string[]
   wantedStatus: WantedStatus
 }> = ({ proposal, reportVisibility, column, showInaccessible, searchPatterns, wantedStatus }) => {
+  const {
+    state: { isMobileScreen },
+  } = useAppState()
   const { userAddress } = useEthereum()
   const { closeTimestamp } = proposal.params
   const {
@@ -153,7 +157,7 @@ export const PollCard: FC<{
     <AnimatePresence initial={false}>
       {visible && (
         <MotionDiv
-          reason={'dashboardPollCards'}
+          reason={isMobileScreen ? 'dashboardPollCardsMobile' : 'dashboardPollCards'}
           layout
           // key={pollId}
           initial={{ height: 0, opacity: 0 }}

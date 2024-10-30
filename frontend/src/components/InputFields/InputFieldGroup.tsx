@@ -23,18 +23,25 @@ type InputFieldGroupProps = {
    * (Defaults to true)
    */
   expandHorizontally?: boolean
+
+  /**
+   * Extra classname to apply to field group
+   */
+  className?: string
 }
 
 export const InputFieldGroup: FC<InputFieldGroupProps> = ({
   fields,
   alignRight,
   expandHorizontally = true,
+  className,
 }) =>
   fields.some(row => (Array.isArray(row) ? row.some(col => col.visible) : row.visible)) ? (
     <div
       className={StringUtils.clsx(
         classes.fieldGroup,
         expandHorizontally ? classes.fieldGroupExpand : classes.fieldGroupCompact,
+        className,
       )}
     >
       {fields.map((row, index) =>

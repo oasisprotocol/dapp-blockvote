@@ -53,18 +53,13 @@
   }
 
   .headerSticky {
-    background: var(--white);
+    background: #e6e5ff;
     border-bottom: none;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-    margin-left: -1.5rem;
-    margin-right: -1.5rem;
-    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+  }
 
-    .logo {
-      > path {
-        fill: var(--logo-blue);
-      }
+  .darkLayout {
+    .headerSticky {
+      background: #130fff;
     }
   }
 
