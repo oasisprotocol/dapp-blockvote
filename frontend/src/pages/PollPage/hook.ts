@@ -98,6 +98,7 @@ export const usePollData = (pollId: string) => {
     visible: shouldPublishVotes(poll?.proposal.params),
     value: 'Votes will be made public when the poll is completed.',
     tagName: 'div',
+    classnames: classes.voteWarning,
   })
 
   const publishVotersLabel = useLabel({
@@ -105,6 +106,7 @@ export const usePollData = (pollId: string) => {
     visible: shouldPublishVoters(poll?.proposal.params),
     value: 'The addresses of the voters will be made public when the poll is completed.',
     tagName: 'div',
+    classnames: classes.voteWarning,
   })
 
   const isPastDue = !!remainingTime?.isPastDue
