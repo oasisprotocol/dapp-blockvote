@@ -101,6 +101,7 @@ export const allowedAnimations = [
   'walletExtend', // Expanding network name at connected wallet
   'dashboardNoPolls', // No poll indicator appearing on the dashboard
   'dashboardPollCards', // Poll cards appearing and disappearing on search etc.
+  // 'dashboardPollCardsMobile', // Poll cards appearing and disappearing on search etc., on mobile
   // 'conditionalField', // A field is conditionally hidden or shown
   'fieldStatus', // Field validation pending, error, correct status indication
   'fieldValidationErrors', // Field validation errors
