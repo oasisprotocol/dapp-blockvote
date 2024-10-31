@@ -69,7 +69,7 @@ export const ConnectWallet: FC<Props> = ({ mobileSticky, avoidButtonClasses = fa
             className={avoidButtonClasses ? undefined : classes.connectWalletBtn}
             color={'primary'}
             disabled={isLoading}
-            size={'medium'}
+            size={'small'}
           >
             Install MetaMask
           </Button>
