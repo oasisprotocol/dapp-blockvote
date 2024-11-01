@@ -150,7 +150,7 @@ export const EthereumContextProvider: FC<PropsWithChildren> = ({ children }) => 
         ])
         l_network = ConfiguredNetwork
       } catch (e: any) {
-        if ((e as any).error?.code === 4902) {
+        if ((e as any).error?.code === 4902 || (e as any).error?.data?.originalError?.code === 4903) {
           await addNetwork(ConfiguredNetwork)
         } else {
           throw e
