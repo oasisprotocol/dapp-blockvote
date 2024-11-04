@@ -12,11 +12,7 @@ const logoSizeMap: Record<'large' | 'small', { width: number; height: number }> 
   },
 }
 
-interface Props {
-  color: string
-}
-
-export const LogoIcon: FC<Props> = ({ color }) => {
+export const LogoIcon: FC = () => {
   const {
     state: { isDesktopScreen },
   } = useAppState()
@@ -28,7 +24,7 @@ export const LogoIcon: FC<Props> = ({ color }) => {
       width={size.width}
       height={size.height}
       viewBox="0 0 816 146"
-      fill={color}
+      fill={'currentcolor'}
       xmlns="http://www.w3.org/2000/svg"
     >
       <g>

@@ -19,13 +19,6 @@ const layoutClasses: Partial<Record<LayoutVariation, string>> = {
   light: classes.lightLayout,
 }
 
-const logoColor: Record<LayoutVariation, string> = {
-  landing: 'var(--navy-blue)',
-  dark: 'white',
-  dashboard: 'var(--navy-blue)',
-  light: 'var(--navy-blue)',
-}
-
 export const Layout: FC<
   PropsWithChildren & {
     variation: LayoutVariation
@@ -61,7 +54,7 @@ export const Layout: FC<
           )}
         >
           <Link to={'/'}>
-            <LogoIcon color={logoColor[variation]} />
+            <LogoIcon />
           </Link>
           {extraWidget ? (
             <div className={'niceLineWide'}>
