@@ -10,6 +10,7 @@
 
 .dashboardLayout {
   background: linear-gradient(180deg, #e6e5ff 0%, #d2d1ff 100%);
+  color: var(--navy-blue);
 }
 
 .landingLayout {
@@ -30,6 +31,10 @@
   padding-bottom: 1.5625rem;
   background: transparent;
   transition: 100ms background-color;
+
+  a {
+    color: currentColor;
+  }
 }
 
 .subHeader {
@@ -39,6 +44,10 @@
 }
 
 @media screen and (max-width: 1000px) {
+  .lightLayout {
+    background: #e6e5ff;
+  }
+
   .inViewPlaceholder {
     position: absolute;
     height: 1px;
@@ -61,6 +70,8 @@
     .headerSticky {
       background: #130fff;
     }
+    background: white;
+    color: var(--navy-blue);
   }
 
   .subHeader {
