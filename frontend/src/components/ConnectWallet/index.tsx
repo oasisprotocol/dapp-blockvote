@@ -94,7 +94,7 @@ export const ConnectWallet: FC<Props> = ({ mobileSticky, avoidButtonClasses = fa
           disabled={isLoading}
           onClick={handleConnectWallet}
         >
-          <label className={classes.connectWalletBtnLabel}>Connect wallet</label>
+          <label className={classes.connectWalletBtnLabel}>Connect Wallet</label>
         </Button>
       )}
       {isConnected && userAddress && chainId && isHomeChain && (

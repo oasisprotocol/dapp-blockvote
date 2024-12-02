@@ -3,13 +3,16 @@ import { Layout } from '../../components/Layout'
 import { ConnectWallet } from '../../components/ConnectWallet'
 import classes from './index.module.css'
 import { Button } from '../../components/Button'
-import { useNavigate } from 'react-router-dom'
-import { appName } from '../../constants/config'
+import { Link, useNavigate } from 'react-router-dom'
+import { appName, VITE_TUTORIAL_URL } from '../../constants/config'
 import { getPollPath } from '../../utils/path.utils'
 
 export const LandingPage: FC = () => {
   const navigate = useNavigate()
   const openDemo = useCallback(() => navigate(getPollPath('demo')), [])
+  const openTutorial = () => {
+    console.log('Should open tutorial')
+  }
 
   return (
     <Layout variation={'landing'}>
@@ -21,8 +24,15 @@ export const LandingPage: FC = () => {
         interaction with the polling system.
         <div className={'niceLineWide noWrap'}>
           <Button color={'secondary'} variant={'outline'} size={'small'} onClick={openDemo}>
-            View Demo
+            Use Demo
           </Button>
+          {VITE_TUTORIAL_URL && (
+            <Link to={VITE_TUTORIAL_URL} target={'_blank'}>
+              <Button color={'secondary'} variant={'outline'} size={'small'} onClick={openTutorial}>
+                Watch Tutorial
+              </Button>
+            </Link>
+          )}
           <ConnectWallet mobileSticky={false} avoidButtonClasses={true} />
         </div>
       </div>
