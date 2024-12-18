@@ -17,6 +17,10 @@ test-localnet:
 deploy-testnet:
 	$(NPM) hardhat --network sapphire-testnet deploy --viteenv ../frontend/.env.staging
 
+.PHONY: deploy-mainnet
+deploy-mainnet:
+	$(NPM) hardhat --network sapphire deploy --viteenv ../frontend/.env.production
+
 .PHONY: deploy-pontusx-testnet
 deploy-pontusx-testnet:
 	$(NPM) hardhat --network pontusx-testnet deploy --viteenv ../frontend/.env.pontusxtest
