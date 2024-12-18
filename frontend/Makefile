@@ -8,6 +8,9 @@ dev:
 dev-staging:
 	$(NPM) dev -m staging
 
+dev-production:
+	$(NPM) dev -m production
+
 dev-pontusxtest:
 	$(NPM) dev -m pontusxtest
 
