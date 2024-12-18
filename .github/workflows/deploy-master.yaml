@@ -39,7 +39,7 @@ jobs:
         with:
           version: 9
       - name: Build
-        run: make build-staging
+        run: make build-production
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
