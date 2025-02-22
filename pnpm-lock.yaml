@@ -192,8 +192,8 @@ importers:
         specifier: ^1.3.3
         version: 1.4.0
       '@nomicfoundation/hardhat-ethers':
-        specifier: ^3.0.5
-        version: 3.0.7(ethers@6.10.0)(hardhat@2.22.9(ts-node@10.9.2(@swc/core@1.7.14)(@types/node@20.16.1)(typescript@5.3.3))(typescript@5.3.3))
+        specifier: ^3.0.8
+        version: 3.0.8(ethers@6.10.0)(hardhat@2.22.9(ts-node@10.9.2(@swc/core@1.7.14)(@types/node@20.16.1)(typescript@5.3.3))(typescript@5.3.3))
       '@oasisprotocol/blockvote-contracts':
         specifier: workspace:^
         version: link:../contracts
@@ -1406,11 +1406,11 @@ packages:
       c-kzg:
         optional: true
 
-  '@nomicfoundation/hardhat-ethers@3.0.7':
-    resolution: {integrity: sha512-pxLWpDiqC208shoz/lMbVFbxcVxE+qIs8qDrwdcubWH99UO1p6uwXakMa36ICRfB/IEToSLDJGSsKhwY84feCQ==}
+  '@nomicfoundation/hardhat-ethers@3.0.8':
+    resolution: {integrity: sha512-zhOZ4hdRORls31DTOqg+GmEZM0ujly8GGIuRY7t7szEk2zW/arY1qDug/py8AEktT00v5K+b6RvbVog+va51IA==}
     peerDependencies:
       ethers: ^6.1.0
-      hardhat: ^2.22.92.0.0
+      hardhat: ^2.0.0
 
   '@nomicfoundation/solidity-analyzer-darwin-arm64@0.1.2':
     resolution: {integrity: sha512-JaqcWPDZENCvm++lFFGjrDd8mxtf+CtLd2MiXvMNTBD33dContTZ9TWETwNFwg7JTJT5Q9HEecH7FA+HTSsIUw==}
@@ -3080,6 +3080,7 @@ packages:
 
   ethereumjs-abi@0.6.8:
     resolution: {integrity: sha512-Tx0r/iXI6r+lRsdvkFDlut0N08jWMnKRZ6Gkq+Nmw75lZe4e6o3EkSnkaBP5NF6+m5PTGAr9JP43N3LyeoglsA==}
+    deprecated: This library has been deprecated and usage is discouraged.
 
   ethereumjs-util@6.2.1:
     resolution: {integrity: sha512-W2Ktez4L01Vexijrm5EB6w7dg4n/TgpoYU4avuT5T3Vmnw/eCRtiBrJfQYS/DCSvDIOLn2k57GcHdeBcgVxAqw==}
@@ -3723,6 +3724,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
@@ -6605,7 +6607,7 @@ snapshots:
       '@nomicfoundation/ethereumjs-rlp': 5.0.4
       ethereum-cryptography: 0.1.3
 
-  '@nomicfoundation/hardhat-ethers@3.0.7(ethers@6.10.0)(hardhat@2.22.9(ts-node@10.9.2(@swc/core@1.7.14)(@types/node@20.16.1)(typescript@5.3.3))(typescript@5.3.3))':
+  '@nomicfoundation/hardhat-ethers@3.0.8(ethers@6.10.0)(hardhat@2.22.9(ts-node@10.9.2(@swc/core@1.7.14)(@types/node@20.16.1)(typescript@5.3.3))(typescript@5.3.3))':
     dependencies:
       debug: 4.3.6(supports-color@8.1.1)
       ethers: 6.10.0
