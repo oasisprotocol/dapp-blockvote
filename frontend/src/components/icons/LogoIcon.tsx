@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import { useAppState } from '../../hooks/useAppState'
+import { VITE_APP_LOGO_FILE, VITE_APP_LOGO_WIDTH, VITE_APP_TITLE } from '../../constants/config'
 
 const logoSizeMap: Record<'large' | 'small', { width: number; height: number }> = {
   large: {
@@ -17,6 +18,16 @@ export const LogoIcon: FC = () => {
     state: { isDesktopScreen },
   } = useAppState()
   const size = logoSizeMap[isDesktopScreen ? 'large' : 'small']
+
+  if (VITE_APP_LOGO_FILE) {
+    return (
+      <img
+        alt={`${VITE_APP_TITLE} logo`}
+        src={VITE_APP_LOGO_FILE}
+        width={VITE_APP_LOGO_WIDTH ? VITE_APP_LOGO_WIDTH * (isDesktopScreen ? 1 : 5 / 6) : size.width}
+      />
+    )
+  }
 
   return (
     <svg
