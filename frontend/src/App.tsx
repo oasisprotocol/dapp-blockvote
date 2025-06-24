@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, useEffect } from 'react'
 import { createHashRouter, Outlet, RouterProvider } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { AppStateContextProvider } from './providers/AppStateProvider'
@@ -9,6 +9,7 @@ import { PollPage } from './pages/PollPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { CreatePollPage } from './pages/CreatePollPage'
 import { ContractContextProvider } from './providers/ContractProvider'
+import { VITE_APP_LANDING_BG } from './constants/config'
 
 const router = createHashRouter([
   {
@@ -33,6 +34,10 @@ const router = createHashRouter([
 ])
 
 export const App: FC = () => {
+  useEffect(() => {
+    if (VITE_APP_LANDING_BG)
+      document.documentElement.style.setProperty('--landing-bg', `url(${VITE_APP_LANDING_BG}`)
+  }, [])
   return (
     <HelmetProvider>
       <ErrorBoundary>

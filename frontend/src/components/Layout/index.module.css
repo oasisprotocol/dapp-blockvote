@@ -15,7 +15,7 @@
 
 .landingLayout {
   height: 100dvh;
-  background-image: url('background.svg');
+  background-image: var(--landing-bg);
   background-size: 2000px 2000px;
   background-position: center center;
   background-repeat: no-repeat;
