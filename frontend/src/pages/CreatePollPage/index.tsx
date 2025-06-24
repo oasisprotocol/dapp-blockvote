@@ -3,10 +3,10 @@ import { CreatePollForm } from './CreatePollForm'
 import { RestrictedContent } from '../RestrictedContent'
 import { Helmet } from 'react-helmet-async'
 import { defaultMetatags } from '../../components/metatags'
-import { appName } from '../../constants/config'
+import { VITE_APP_TITLE } from '../../constants/config'
 
 export const CreatePollPage: FC = () => {
-  const title = `Create a new poll with ${appName}`
+  const title = `Create a new poll with ${VITE_APP_TITLE}`
   return (
     <>
       <Helmet>

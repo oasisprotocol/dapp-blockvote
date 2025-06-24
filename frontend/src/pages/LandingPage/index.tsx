@@ -4,7 +4,7 @@ import { ConnectWallet } from '../../components/ConnectWallet'
 import classes from './index.module.css'
 import { Button } from '../../components/Button'
 import { Link, useNavigate } from 'react-router-dom'
-import { appName, VITE_TUTORIAL_URL } from '../../constants/config'
+import { VITE_APP_TITLE, VITE_TUTORIAL_URL } from '../../constants/config'
 import { getPollPath } from '../../utils/path.utils'
 
 export const LandingPage: FC = () => {
@@ -18,7 +18,7 @@ export const LandingPage: FC = () => {
     <Layout variation={'landing'}>
       <div className={classes.landing}>
         <h2>
-          Welcome to <span className={'noWrap'}>{appName}</span>, a poll creation tool for your DAO.
+          Welcome to <span className={'noWrap'}>{VITE_APP_TITLE}</span>, a poll creation tool for your DAO.
         </h2>
         To participate in a poll or create one, please connect your wallet. This ensures secure and verified
         interaction with the polling system.

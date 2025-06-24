@@ -19,6 +19,8 @@ const {
   VITE_CONTRACT_GASLESSVOTING,
   VITE_APP_ROOT_URL,
   VITE_TUTORIAL_URL,
+  VITE_APP_TITLE,
+  VITE_APP_TAGLINE,
 } = import.meta.env
 
 const VITE_NETWORK_BIGINT: bigint = BigInt(ENV_VITE_NETWORK) ?? 0n
@@ -50,6 +52,8 @@ export {
   VITE_PINATA_JWT,
   VITE_IPFS_GATEWAY,
   VITE_TUTORIAL_URL,
+  VITE_APP_TITLE,
+  VITE_APP_TAGLINE,
 }
 
 export const MIN_COMPLETION_TIME_MINUTES = 3
@@ -93,8 +97,6 @@ export const designDecisions = {
   hidePollCardsWithErrors: true,
 }
 
-export const appName = 'Oasis Blockvote'
-export const appNameAndTagline = 'Oasis Blockvote, a poll creation tool for your DAO'
 export const appDescription =
   'Create polls for everyone or just your group, with public results but cryptographically secure and private votes.'
 export const appRootUrl = VITE_APP_ROOT_URL
