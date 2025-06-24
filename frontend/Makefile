@@ -14,6 +14,9 @@ dev-production:
 dev-pontusxtest:
 	$(NPM) dev -m pontusxtest
 
+dev-lido:
+	$(NPM) dev -m development.lido
+
 build:
 	$(NPM) $@
 
@@ -31,6 +34,9 @@ build-pontusxtest:
 
 build-production:
 	$(NPM) vite build -m production
+
+build-production-lido:
+	$(NPM) vite build -m production.lido
 
 clean:
 	rm -rf dist
