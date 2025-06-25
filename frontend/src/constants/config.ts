@@ -24,6 +24,11 @@ const {
   VITE_APP_LANDING_BG,
   VITE_APP_LOGO_FILE,
   VITE_APP_LOGO_WIDTH,
+  VITE_APP_HARDWIRED_ACL,
+  VITE_APP_HARDWIRED_NETWORK,
+  VITE_APP_HARDWIRED_TOKEN_ADDRESS,
+  VITE_APP_HARDWIRED_TOKEN_HOLDER,
+  VITE_APP_HARDWIRED_VOTE_WEIGHTING,
 } = import.meta.env
 
 const VITE_NETWORK_BIGINT: bigint = BigInt(ENV_VITE_NETWORK) ?? 0n
@@ -60,6 +65,11 @@ export {
   VITE_APP_LANDING_BG,
   VITE_APP_LOGO_FILE,
   VITE_APP_LOGO_WIDTH,
+  VITE_APP_HARDWIRED_ACL,
+  VITE_APP_HARDWIRED_NETWORK,
+  VITE_APP_HARDWIRED_TOKEN_ADDRESS,
+  VITE_APP_HARDWIRED_TOKEN_HOLDER,
+  VITE_APP_HARDWIRED_VOTE_WEIGHTING,
 }
 
 export const MIN_COMPLETION_TIME_MINUTES = 3
@@ -101,6 +111,7 @@ export const designDecisions = {
   disableSelectsWithOnlyOneVisibleOption: true,
   showSubmitButton: false,
   hidePollCardsWithErrors: true,
+  hideHardwiredSettings: false,
 }
 
 export const appDescription =

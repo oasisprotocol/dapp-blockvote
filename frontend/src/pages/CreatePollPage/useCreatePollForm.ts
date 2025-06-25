@@ -20,7 +20,12 @@ import { useContracts } from '../../hooks/useContracts'
 import classes from './index.module.css'
 import { DateUtils } from '../../utils/date.utils'
 import { useTime } from '../../hooks/useTime'
-import { designDecisions, MIN_COMPLETION_TIME_MINUTES, nativeTokenName } from '../../constants/config'
+import {
+  designDecisions,
+  MIN_COMPLETION_TIME_MINUTES,
+  nativeTokenName,
+  VITE_APP_HARDWIRED_ACL,
+} from '../../constants/config'
 
 import { useNavigate } from 'react-router-dom'
 import { acls } from '../../components/ACLs'
@@ -116,6 +121,9 @@ export const useCreatePollForm = () => {
     name: 'accessControlMethod',
     label: 'Who can vote',
     choices: acls,
+    initialValue: VITE_APP_HARDWIRED_ACL,
+    enabled: !VITE_APP_HARDWIRED_ACL,
+    visible: !designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_ACL,
   } as const)
 
   const aclConfig = acls.map(acl => ({

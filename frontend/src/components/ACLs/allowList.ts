@@ -1,5 +1,9 @@
 import { CheckPermissionResults, defineACL } from './common'
-import { designDecisions, VITE_CONTRACT_ACL_VOTERALLOWLIST } from '../../constants/config'
+import {
+  designDecisions,
+  VITE_APP_HARDWIRED_VOTE_WEIGHTING,
+  VITE_CONTRACT_ACL_VOTERALLOWLIST,
+} from '../../constants/config'
 import { abiEncode, isValidAddress } from '../../utils/poll.utils'
 import { denyWithReason, useOneOfField, useTextArrayField } from '../InputFields'
 
@@ -51,7 +55,9 @@ export const allowList = defineACL({
     const voteWeighting = useOneOfField({
       name: 'voteWeighting',
       label: 'Vote weight',
-      visible: active,
+      visible: active && (!designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_VOTE_WEIGHTING),
+      enabled: !VITE_APP_HARDWIRED_VOTE_WEIGHTING,
+      initialValue: VITE_APP_HARDWIRED_VOTE_WEIGHTING,
       choices: [
         {
           value: 'weight_perWallet',

@@ -5,6 +5,7 @@ import {
   configuredExplorerUrl,
   configuredNetworkName,
   designDecisions,
+  VITE_APP_HARDWIRED_VOTE_WEIGHTING,
   VITE_CONTRACT_ACL_TOKENHOLDER,
 } from '../../constants/config'
 import { StringUtils } from '../../utils/string.utils'
@@ -55,7 +56,8 @@ export const tokenHolder = defineACL({
     const voteWeighting = useOneOfField({
       name: 'voteWeighting',
       label: 'Vote weight',
-      visible: active,
+      visible: active && (!designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_VOTE_WEIGHTING),
+      enabled: !VITE_APP_HARDWIRED_VOTE_WEIGHTING,
       choices: [
         {
           value: 'weight_perWallet',
@@ -70,7 +72,7 @@ export const tokenHolder = defineACL({
           label: 'According to log10(token distribution)',
         },
       ],
-      initialValue: 'weight_perToken',
+      initialValue: VITE_APP_HARDWIRED_VOTE_WEIGHTING ?? 'weight_perToken',
       disableIfOnlyOneVisibleChoice: designDecisions.disableSelectsWithOnlyOneVisibleOption,
     } as const)
 
@@ -82,6 +84,8 @@ export const tokenHolder = defineACL({
           return 0n
         case 'weight_perLog10Token':
           return FLAG_WEIGHT_LOG10
+        default:
+          throw new Error(`Unknown vote weight mapping "${selection}"!`)
       }
     }
 
