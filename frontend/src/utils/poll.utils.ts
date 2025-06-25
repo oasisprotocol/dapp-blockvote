@@ -18,10 +18,12 @@ import { decode as cborDecode, encode as cborEncode } from 'cborg'
 
 import {
   chain_info,
+  miniMeTokenDetailsFromProvider,
   erc20TokenDetailsFromProvider,
   xchainRPC,
   AclOptions,
   guessStorageSlot,
+  getMiniMeStorageSlot,
   getNftContractType,
   ChainDefinition,
   IPollACL__factory,
@@ -93,6 +95,19 @@ export const abiEncode = (types: ReadonlyArray<string | ParamType>, values: Read
 
 export const RPC_ERROR = 'rpc-error'
 
+export const getMiniMeTokenDetails = async (
+  chainId: number,
+  address: string,
+): Promise<TokenInfo | typeof RPC_ERROR | undefined> => {
+  const rpc = xchainRPC(chainId)
+  try {
+    return await miniMeTokenDetailsFromProvider(getAddress(address), rpc)
+  } catch (e) {
+    if (typeof e === 'object' && ((e as any).value?.[0] as any)?.code === -32005) return RPC_ERROR
+    return undefined
+  }
+}
+
 export const getERC20TokenDetails = async (
   chainId: number,
   address: string,
@@ -143,7 +158,10 @@ export const getContractDetails = async (
   if (tokenInfoCache.has(key)) {
     return tokenInfoCache.get(key)
   } else {
-    const result = (await getERC20TokenDetails(chainId, address)) ?? (await getNftDetails(chainId, address))
+    const result =
+      (await getMiniMeTokenDetails(chainId, address)) ??
+      (await getERC20TokenDetails(chainId, address)) ??
+      (await getNftDetails(chainId, address))
     if (!!result && result !== RPC_ERROR) {
       tokenInfoCache.set(key, result)
     }
@@ -164,16 +182,18 @@ export const checkXchainTokenHolder = async (
 ) => {
   const rpc = xchainRPC(chainId)
   try {
-    return await guessStorageSlot(
-      rpc,
-      tokenAddress,
-      contractType,
-      decimals,
-      holderAddress,
-      'latest',
-      isStillFresh,
-      progressCallback,
-    )
+    return contractType === 'MiniMe'
+      ? await getMiniMeStorageSlot(rpc, tokenAddress, holderAddress, 'latest', isStillFresh, progressCallback)
+      : await guessStorageSlot(
+          rpc,
+          tokenAddress,
+          contractType,
+          decimals,
+          holderAddress,
+          'latest',
+          isStillFresh,
+          progressCallback,
+        )
   } catch (e) {
     if (typeof e === 'object' && ((e as any).value?.[0] as any)?.code === -32005) return RPC_ERROR
     return undefined
