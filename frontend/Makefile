@@ -37,3 +37,6 @@ clean:
 
 veryclean: clean
 	rm -rf node_modules
+
+deploy-pontusxtest: build-pontusxtest
+	./node_modules/.bin/netlify deploy --dir=frontend/dist --prod

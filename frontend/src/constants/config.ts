@@ -93,8 +93,8 @@ export const designDecisions = {
   hidePollCardsWithErrors: true,
 }
 
-export const appName = 'Oasis Blockvote'
-export const appNameAndTagline = 'Oasis Blockvote, a poll creation tool for your DAO'
+export const appName = 'Pontus-X Blockvote'
+export const appNameAndTagline = 'Pontus-X Blockvote, a poll creation tool for your DAO'
 export const appDescription =
   'Create polls for everyone or just your group, with public results but cryptographically secure and private votes.'
 export const appRootUrl = VITE_APP_ROOT_URL
