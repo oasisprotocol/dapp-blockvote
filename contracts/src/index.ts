@@ -7,3 +7,4 @@ export * from './xchain.js';
 export * from './types.js';
 export * from './chains.js';
 export * from './eip712.js';
+export * from "./minime.js";
