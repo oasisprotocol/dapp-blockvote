@@ -18,6 +18,7 @@ import {
   getLatestBlock,
   isToken,
   isValidAddress,
+  RPC_ERROR,
 } from '../../utils/poll.utils'
 import {
   AclOptionsXchain,
@@ -34,6 +35,8 @@ import { useMemo, useState } from 'react'
 import { StringUtils } from '../../utils/string.utils'
 import { FLAG_WEIGHT_LOG10, FLAG_WEIGHT_ONE } from '../../types'
 import { getLink } from '../../utils/markdown.utils'
+
+const RPC_ERROR_MESSAGE = 'Error while communicating with blockchain! Click to try again.'
 
 export const xchain = defineACL({
   value: 'acl_xchain',
@@ -78,6 +81,7 @@ export const xchain = defineACL({
           controls.updateStatus({ message: 'Checking out contract...' })
           const tokenUrl = explorerUrl ? StringUtils.getAccountUrl(explorerUrl, value) : undefined
           const details = await getContractDetails(chain.value, value)
+          if (details === RPC_ERROR) return RPC_ERROR_MESSAGE
           if (details) {
             const output: ValidatorOutput[] = []
             output.push(
@@ -138,6 +142,7 @@ export const xchain = defineACL({
         value => (isValidAddress(value) ? undefined : "This doesn't seem to be a valid address."),
         async (value, controls) => {
           const contractDetails = await getContractDetails(chain.value, contractAddress.value)
+          if (contractDetails === RPC_ERROR) return RPC_ERROR_MESSAGE
           if (!contractDetails) return "Can't find token details!"
           const slot = await checkXchainTokenHolder(
             chain.value,
@@ -149,6 +154,7 @@ export const xchain = defineACL({
               controls.updateStatus({ message: progress })
             },
           )
+          if (slot === RPC_ERROR) return RPC_ERROR_MESSAGE
           if (!slot) {
             const walletUrl = explorerUrl ? StringUtils.getAccountUrl(explorerUrl, value) : undefined
             if (contractDetails.type === 'ERC-721') {
@@ -165,6 +171,7 @@ export const xchain = defineACL({
           })
           controls.updateStatus({ message: 'Looking up reference block ...' })
           const block = await getLatestBlock(chain.value)
+          if (block === RPC_ERROR) return RPC_ERROR_MESSAGE
           if (!block?.hash) return 'Failed to fetch latest block.'
           setBlockHash(block.hash)
           // blockHash.setValue(block.hash)
@@ -275,7 +282,7 @@ export const xchain = defineACL({
     let explanation = ''
     let error = ''
     let proof: BytesLike = ''
-    let tokenInfo: TokenInfo | NFTInfo | undefined
+    let tokenInfo: TokenInfo | NFTInfo | typeof RPC_ERROR | undefined
     let canVote: DecisionWithReason = true
     const provider = xchainRPC(chainId)
     const chainDefinition = getChainDefinition(chainId)
@@ -295,6 +302,7 @@ export const xchain = defineACL({
     const tokenUrl = explorerUrl ? StringUtils.getAccountUrl(explorerUrl, tokenAddress) : undefined
     try {
       tokenInfo = await getContractDetails(chainId, tokenAddress)
+      if (tokenInfo === RPC_ERROR) throw new Error(RPC_ERROR_MESSAGE)
       if (!tokenInfo) throw new Error("Can't load token details")
       explanation = `This poll is only for those who have hold ${getLink({ label: tokenInfo?.name ?? StringUtils.truncateAddress(tokenInfo.addr), href: tokenUrl })} on ${getLink({ label: chainDefinition.name, href: explorerUrl })} when the poll was created.`
       let isBalancePositive = false
