@@ -421,8 +421,23 @@ export function useInputFieldInternal<DataType>(
     const oldLength = latestMessages.length
     latestMessages = latestMessages.filter(p => p.text !== message || p.type === 'info')
     setMessages(latestMessages)
-    if (messages.length !== oldLength) setIsValidated(false)
+    if (latestMessages.length !== oldLength) {
+      setIsValidated(false)
+    }
   }
+
+  useEffect(() => {
+    if (
+      !isValidated &&
+      !validationPending &&
+      !messages.length &&
+      !!validateOnChange &&
+      !enabled &&
+      !isEmpty(cleanValue)
+    ) {
+      void validate({ reason: 'change', isStillFresh: () => true })
+    }
+  }, [isValidated, validationPending, messages.length, validateOnChange, isEmpty(cleanValue), enabled])
 
   const clearMessagesAt = (location: string): void => {
     latestMessages = latestMessages.filter(p => p.location !== location)
