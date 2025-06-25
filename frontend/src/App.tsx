@@ -9,7 +9,12 @@ import { PollPage } from './pages/PollPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { CreatePollPage } from './pages/CreatePollPage'
 import { ContractContextProvider } from './providers/ContractProvider'
-import { VITE_APP_LANDING_BG } from './constants/config'
+import {
+  VITE_APP_DARK_BG,
+  VITE_APP_DASHBOARD_BG,
+  VITE_APP_LANDING_BG,
+  VITE_APP_LIGHT_BG,
+} from './constants/config'
 
 const router = createHashRouter([
   {
@@ -35,8 +40,11 @@ const router = createHashRouter([
 
 export const App: FC = () => {
   useEffect(() => {
-    if (VITE_APP_LANDING_BG)
-      document.documentElement.style.setProperty('--landing-bg', `url(${VITE_APP_LANDING_BG}`)
+    if (VITE_APP_LANDING_BG) document.documentElement.style.setProperty('--landing-bg', VITE_APP_LANDING_BG)
+    if (VITE_APP_DASHBOARD_BG)
+      document.documentElement.style.setProperty('--dashboard-bg', VITE_APP_DASHBOARD_BG)
+    if (VITE_APP_LIGHT_BG) document.documentElement.style.setProperty('--light-bg', VITE_APP_LIGHT_BG)
+    if (VITE_APP_DARK_BG) document.documentElement.style.setProperty('--dark-bg', VITE_APP_DARK_BG)
   }, [])
   return (
     <HelmetProvider>

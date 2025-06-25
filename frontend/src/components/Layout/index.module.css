@@ -1,24 +1,21 @@
 .darkLayout {
-  background: #130fff;
+  background: var(--dark-bg);
   color: white;
 }
 
 .lightLayout {
-  background: white;
+  background: var(--light-bg);
   color: var(--navy-blue);
 }
 
 .dashboardLayout {
-  background: linear-gradient(180deg, #e6e5ff 0%, #d2d1ff 100%);
+  background: var(--dashboard-bg);
   color: var(--navy-blue);
 }
 
 .landingLayout {
   height: 100dvh;
-  background-image: var(--landing-bg);
-  background-size: 2000px 2000px;
-  background-position: center center;
-  background-repeat: no-repeat;
+  background: var(--landing-bg);
   color: var(--navy-blue);
 }
 
