@@ -46,10 +46,10 @@ export type GetProofResponse = {
   storageProof: StorageProof[];
 };
 
-export type TokenType = 'ERC-20';
+export type TokenType = 'ERC-20' | 'MiniMe';
 export type NftType = 'ERC-721' | 'ERC-1155';
 export type ContractType = TokenType | NftType;
-export const isToken = (type: ContractType): boolean => type === 'ERC-20';
+export const isToken = (type: ContractType): boolean => type === 'ERC-20' || type === 'MiniMe';
 
 export type TokenInfo = {
   chainId: bigint;

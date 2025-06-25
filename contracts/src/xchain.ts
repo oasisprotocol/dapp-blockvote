@@ -70,6 +70,41 @@ export function xchainRPC(chainId: number) {
   return rpc;
 }
 
+/**
+ * We need to support the MiniMeToken, because of LIDO.
+ * See the token contract here:
+ * https://github.com/aragon/minime/blob/master/contracts/MiniMeToken.sol#L293-L312
+ */
+const MiniMeTokenAbi = [
+  'function name() public view returns (string)',
+  'function symbol() public view returns (string)',
+  'function decimals() public view returns (uint8)',
+  'function totalSupply() public view returns (uint256)',
+  `function balanceOfAt(address _owner, uint _blockNumber) public constant returns (uint)`
+];
+
+
+export async function miniMeTokenDetailsFromProvider(
+  addr: string,
+  provider: JsonRpcProvider,
+): Promise<TokenInfo> {
+  const c = new Contract(addr, MiniMeTokenAbi, provider);
+  const network = await provider.getNetwork();
+  const testOwner = '0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c'
+  const textBlock = 21672028
+  const balance = await c.balanceOfAt(testOwner, textBlock)
+  console.log('balance', balance)
+  return {
+    addr: addr,
+    chainId: network.chainId,
+    name: await c.name(),
+    symbol: await c.symbol(),
+    decimals: await c.decimals(),
+    totalSupply: await c.totalSupply(),
+    type: 'MiniMe',
+  };
+}
+
 const ERC20Abi = [
   'function name() public view returns (string)',
   'function symbol() public view returns (string)',
