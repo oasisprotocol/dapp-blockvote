@@ -7,7 +7,7 @@ import { CompletedPoll } from './CompletedPoll'
 import { ActivePoll } from './ActivePoll'
 import { ThanksForVote } from './ThanksForVoting'
 import { Helmet } from 'react-helmet-async'
-import { appName, appNameAndTagline, appRootUrl } from '../../constants/config'
+import { VITE_APP_TITLE, VITE_APP_TAGLINE, appRootUrl } from '../../constants/config'
 import { getPollIdFromRouter, getPollPath } from '../../utils/path.utils'
 
 const PollLoading: FC = () => {
@@ -88,7 +88,7 @@ export const PollPage: FC = () => {
   const { poll } = pollData
   const params = poll?.ipfsParams
   if (params) {
-    const title = `${params!.name} - ${appName}`
+    const title = `${params!.name} - ${VITE_APP_TITLE}`
     const description = params!.description
     return (
       <>
@@ -111,9 +111,9 @@ export const PollPage: FC = () => {
     return (
       <>
         <Helmet>
-          <title>{appNameAndTagline}</title>
-          <meta name="twitter:title" content={appNameAndTagline} />
-          <meta property="og:title" content={appNameAndTagline} />
+          <title>{VITE_APP_TAGLINE}</title>
+          <meta name="twitter:title" content={VITE_APP_TAGLINE} />
+          <meta property="og:title" content={VITE_APP_TAGLINE} />
           <meta property="og:url" content={appRootUrl} />
         </Helmet>
         <PollUI {...pollData} />

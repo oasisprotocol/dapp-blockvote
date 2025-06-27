@@ -19,6 +19,23 @@ const {
   VITE_CONTRACT_GASLESSVOTING,
   VITE_APP_ROOT_URL,
   VITE_TUTORIAL_URL,
+  VITE_APP_TITLE,
+  VITE_APP_TAGLINE,
+  VITE_APP_LANDING_TITLE1,
+  VITE_APP_LANDING_TITLE2,
+  VITE_APP_THUMBNAIL,
+  VITE_APP_LANDING_BG,
+  VITE_APP_DASHBOARD_BG,
+  VITE_APP_LIGHT_BG,
+  VITE_APP_DARK_BG,
+  VITE_APP_LOGO_FILE,
+  VITE_APP_LOGO_WIDTH,
+  VITE_APP_HARDWIRED_ACL,
+  VITE_APP_HARDWIRED_NETWORK,
+  VITE_APP_HARDWIRED_TOKEN_ADDRESS,
+  VITE_APP_HARDWIRED_TOKEN_HOLDER,
+  VITE_APP_HARDWIRED_VOTE_WEIGHTING,
+  VITE_APP_HARDWIRED_RESULTS_DISPLAY,
 } = import.meta.env
 
 const VITE_NETWORK_BIGINT: bigint = BigInt(ENV_VITE_NETWORK) ?? 0n
@@ -50,6 +67,23 @@ export {
   VITE_PINATA_JWT,
   VITE_IPFS_GATEWAY,
   VITE_TUTORIAL_URL,
+  VITE_APP_TITLE,
+  VITE_APP_TAGLINE,
+  VITE_APP_LANDING_TITLE1,
+  VITE_APP_LANDING_TITLE2,
+  VITE_APP_THUMBNAIL,
+  VITE_APP_LANDING_BG,
+  VITE_APP_DASHBOARD_BG,
+  VITE_APP_LIGHT_BG,
+  VITE_APP_DARK_BG,
+  VITE_APP_LOGO_FILE,
+  VITE_APP_LOGO_WIDTH,
+  VITE_APP_HARDWIRED_ACL,
+  VITE_APP_HARDWIRED_NETWORK,
+  VITE_APP_HARDWIRED_TOKEN_ADDRESS,
+  VITE_APP_HARDWIRED_TOKEN_HOLDER,
+  VITE_APP_HARDWIRED_VOTE_WEIGHTING,
+  VITE_APP_HARDWIRED_RESULTS_DISPLAY,
 }
 
 export const MIN_COMPLETION_TIME_MINUTES = 3
@@ -91,10 +125,9 @@ export const designDecisions = {
   disableSelectsWithOnlyOneVisibleOption: true,
   showSubmitButton: false,
   hidePollCardsWithErrors: true,
+  hideHardwiredSettings: false,
 }
 
-export const appName = 'Oasis Blockvote'
-export const appNameAndTagline = 'Oasis Blockvote, a poll creation tool for your DAO'
 export const appDescription =
   'Create polls for everyone or just your group, with public results but cryptographically secure and private votes.'
 export const appRootUrl = VITE_APP_ROOT_URL

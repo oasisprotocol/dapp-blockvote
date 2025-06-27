@@ -2,7 +2,7 @@ import { FC, useCallback, useMemo } from 'react'
 import classes from './index.module.css'
 import { StringUtils } from '../../utils/string.utils'
 import { LinkedinShareButton, TwitterShareButton } from 'react-share'
-import { appName } from '../../constants/config'
+import { VITE_APP_TITLE } from '../../constants/config'
 import { MaybeWithTooltip } from '../Tooltip/MaybeWithTooltip'
 
 const Twitter: FC<{ classname?: string }> = ({ classname }) => (
@@ -55,7 +55,7 @@ const AsEmbed: FC<{ classname?: string; url: string; title: string }> = ({ class
     () =>
       `<iframe
             width="640" height="720" src="${url}"
-            title="${title} - ${appName}" frameBorder="0"
+            title="${title} - ${VITE_APP_TITLE}" frameBorder="0"
             allow="clipboard-write; web-share"
             referrerPolicy="strict-origin-when-cross-origin" 
             allowFullScreen

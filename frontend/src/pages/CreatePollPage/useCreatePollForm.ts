@@ -13,14 +13,19 @@ import {
   useTextArrayField,
   useTextField,
   useAction,
-  InputFieldProps,
 } from '../../components/InputFields'
 import { createPoll as doCreatePoll, parseEther, CreatePollProps } from '../../utils/poll.utils'
 import { useContracts } from '../../hooks/useContracts'
 import classes from './index.module.css'
 import { DateUtils } from '../../utils/date.utils'
 import { useTime } from '../../hooks/useTime'
-import { designDecisions, MIN_COMPLETION_TIME_MINUTES, nativeTokenName } from '../../constants/config'
+import {
+  designDecisions,
+  MIN_COMPLETION_TIME_MINUTES,
+  nativeTokenName,
+  VITE_APP_HARDWIRED_ACL,
+  VITE_APP_HARDWIRED_RESULTS_DISPLAY,
+} from '../../constants/config'
 
 import { useNavigate } from 'react-router-dom'
 import { acls } from '../../components/ACLs'
@@ -116,6 +121,9 @@ export const useCreatePollForm = () => {
     name: 'accessControlMethod',
     label: 'Who can vote',
     choices: acls,
+    initialValue: VITE_APP_HARDWIRED_ACL,
+    enabled: !VITE_APP_HARDWIRED_ACL,
+    visible: !designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_ACL,
   } as const)
 
   const aclConfig = acls.map(acl => ({
@@ -180,9 +188,7 @@ export const useCreatePollForm = () => {
 
   const [isFrozen, setIsFrozen] = useState(false)
 
-  const freezingOptions: Partial<InputFieldProps<any>> = {
-    enabled: isFrozen ? deny('Too late to change your mind; we are already creating the poll') : true,
-  }
+  const frozenMassage = 'Too late to change your mind; we are already creating the poll'
 
   const resultDisplayType = useOneOfField({
     name: 'resultDisplayType',
@@ -209,7 +215,9 @@ export const useCreatePollForm = () => {
         description: 'Everyone can see who voted for what.',
       },
     ],
-    ...freezingOptions,
+    initialValue: VITE_APP_HARDWIRED_RESULTS_DISPLAY,
+    enabled: isFrozen ? deny(frozenMassage) : !VITE_APP_HARDWIRED_RESULTS_DISPLAY,
+    visible: !designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_RESULTS_DISPLAY,
     hideDisabledChoices: designDecisions.hideDisabledSelectOptions,
   } as const)
 
@@ -225,7 +233,7 @@ export const useCreatePollForm = () => {
       {
         value: 'also_percentages',
         label: 'Also show percentage for each answer',
-        hidden: resultDisplayType.value === 'percentages',
+        hidden: resultDisplayType.value !== 'end_result_only',
       },
       {
         value: 'voters',
@@ -249,7 +257,7 @@ export const useCreatePollForm = () => {
   const hasCompletionDate = useBooleanField({
     name: 'hasCompletionDate',
     label: 'Fixed completion date',
-    ...freezingOptions,
+    enabled: isFrozen ? deny(frozenMassage) : true,
     onValueChange: value => {
       if (value) pollCompletionDate.setValue(new Date(Date.now() + 1000 * 3600))
     },
@@ -261,7 +269,7 @@ export const useCreatePollForm = () => {
     name: 'pollCompletionDate',
     label: `Poll completion date (Time zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone})`,
     visible: hasCompletionDate.value,
-    ...freezingOptions,
+    enabled: isFrozen ? deny(frozenMassage) : true,
     validateOnChange: true,
     showValidationPending: false,
     validators: value => {

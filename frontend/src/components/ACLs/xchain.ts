@@ -29,7 +29,14 @@ import {
   xchainRPC,
 } from '@oasisprotocol/blockvote-contracts'
 import type { TokenInfo, NFTInfo } from '@oasisprotocol/blockvote-contracts'
-import { designDecisions, VITE_CONTRACT_ACL_STORAGEPROOF } from '../../constants/config'
+import {
+  designDecisions,
+  VITE_APP_HARDWIRED_NETWORK,
+  VITE_APP_HARDWIRED_TOKEN_ADDRESS,
+  VITE_APP_HARDWIRED_TOKEN_HOLDER,
+  VITE_APP_HARDWIRED_VOTE_WEIGHTING,
+  VITE_CONTRACT_ACL_STORAGEPROOF,
+} from '../../constants/config'
 import { BytesLike, getBytes, getUint, hexlify } from 'ethers'
 import { useMemo, useState } from 'react'
 import { StringUtils } from '../../utils/string.utils'
@@ -57,8 +64,10 @@ export const xchain = defineACL({
     const chain = useOneOfField({
       name: 'chainId',
       label: 'Chain',
-      visible: active,
+      visible: active && (!designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_NETWORK),
+      enabled: !VITE_APP_HARDWIRED_NETWORK,
       choices: chainChoices,
+      initialValue: VITE_APP_HARDWIRED_NETWORK,
       onValueChange: (_, isStillFresh) => {
         if (contractAddress.isValidated) {
           void contractAddress.validate({ forceChange: true, reason: 'change', isStillFresh })
@@ -72,8 +81,10 @@ export const xchain = defineACL({
     const contractAddress = useTextField({
       name: 'contractAddress',
       label: 'Contract Address',
-      visible: active,
+      visible: active && (!designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_TOKEN_ADDRESS),
+      enabled: !VITE_APP_HARDWIRED_TOKEN_ADDRESS,
       placeholder: 'Contract address on chain. (Token or NFT)',
+      initialValue: VITE_APP_HARDWIRED_TOKEN_ADDRESS,
       required: [true, 'Please specify the address on the other chain that is the key to this poll!'],
       validators: [
         value => (isValidAddress(value) ? undefined : "This doesn't seem to be a valid address."),
@@ -118,6 +129,7 @@ export const xchain = defineACL({
         },
       ],
       validateOnChange: true,
+      validateEvenIfHidden: active,
       showValidationSuccess: true,
       onValueChange: (_, isStillFresh) => {
         if (walletAddress.isValidated) {
@@ -126,8 +138,7 @@ export const xchain = defineACL({
       },
     })
 
-    const hasValidTokenAddress =
-      contractAddress.visible && contractAddress.isValidated && !contractAddress.hasProblems
+    const hasValidTokenAddress = active && contractAddress.isValidated && !contractAddress.hasProblems
 
     const [slotNumber, setSlotNumber] = useState(0)
     const [blockHash, setBlockHash] = useState('')
@@ -135,12 +146,16 @@ export const xchain = defineACL({
     const walletAddress = useTextField({
       name: 'walletAddress',
       label: 'Wallet Address',
-      visible: hasValidTokenAddress,
+      visible:
+        hasValidTokenAddress && (!designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_TOKEN_HOLDER),
       placeholder: 'Wallet address of a token holder on chain',
       required: [true, 'Please specify the address of a token holder!'],
+      initialValue: VITE_APP_HARDWIRED_TOKEN_HOLDER,
+      enabled: !VITE_APP_HARDWIRED_TOKEN_HOLDER,
       validators: [
         value => (isValidAddress(value) ? undefined : "This doesn't seem to be a valid address."),
         async (value, controls) => {
+          if (!hasValidTokenAddress) return `Please set ${contractAddress.label} first!`
           const contractDetails = await getContractDetails(chain.value, contractAddress.value)
           if (contractDetails === RPC_ERROR) return RPC_ERROR_MESSAGE
           if (!contractDetails) return "Can't find token details!"
@@ -184,14 +199,17 @@ export const xchain = defineACL({
           return output
         },
       ],
-      validateOnChange: true,
+      validateOnChange: hasValidTokenAddress,
+      validateEvenIfHidden: active,
       showValidationSuccess: true,
     })
 
     const voteWeighting = useOneOfField({
       name: 'voteWeighting',
       label: 'Vote weight',
-      visible: active,
+      visible: active && (!designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_VOTE_WEIGHTING),
+      enabled: !VITE_APP_HARDWIRED_VOTE_WEIGHTING,
+      initialValue: VITE_APP_HARDWIRED_VOTE_WEIGHTING,
       choices: [
         {
           value: 'weight_perWallet',
@@ -205,7 +223,7 @@ export const xchain = defineACL({
           value: 'weight_perLog10Token',
           label: 'According to log10(token distribution)',
         },
-      ],
+      ] as const,
       hideDisabledChoices: designDecisions.hideDisabledSelectOptions,
       disableIfOnlyOneVisibleChoice: designDecisions.disableSelectsWithOnlyOneVisibleOption,
     } as const)
@@ -218,6 +236,8 @@ export const xchain = defineACL({
           return 0n
         case 'weight_perLog10Token':
           return FLAG_WEIGHT_LOG10
+        default:
+          throw new Error(`Unknown vote weight mapping "${selection}"!`)
       }
     }
 
