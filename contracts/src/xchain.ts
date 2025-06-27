@@ -265,6 +265,7 @@ export async function guessStorageSlot(
   provider: JsonRpcProvider,
   account: string,
   contractType: ContractType,
+  decimals: bigint,
   holder: string,
   blockHash = 'latest',
   isStillFresh: () => boolean = () => true,
@@ -274,12 +275,9 @@ export async function guessStorageSlot(
   balance: bigint;
   balanceDecimal?: string;
 } | null> {
-  let tokenDetails: TokenInfo | undefined;
-  let nftDetails: NFTInfo | undefined;
   let balance: bigint = 0n;
 
   const getERC20Storage = async () => {
-    tokenDetails = await erc20TokenDetailsFromProvider(account, provider);
     const abi = ['function balanceOf(address account) view returns (uint256)'];
     const c = new Contract(account, abi, provider);
     balance = (await c.balanceOf(holder)) as bigint;
@@ -289,7 +287,6 @@ export async function guessStorageSlot(
   };
 
   const getERC721Storage = async () => {
-    nftDetails = await erc712NftDetailsFromProvider(account, provider);
     const abi = ['function balanceOf(address _owner) external view returns (uint256)'];
     const c = new Contract(account, abi, provider);
     balance = (await c.balanceOf(holder)) as bigint;
@@ -301,7 +298,6 @@ export async function guessStorageSlot(
   };
 
   const getERC1155Storage = async () => {
-    nftDetails = await erc1155NftDetailsFromProvider(account, provider);
     const abi = ['function balanceOf(address _owner, uint256 _id) external view returns (uint256)'];
     const c = new Contract(account, abi, provider);
     balance = (await c.balanceOf(holder, account)) as bigint;
@@ -315,7 +311,6 @@ export async function guessStorageSlot(
   const getWantedStorage = async (): Promise<string> => {
     switch (contractType) {
       case 'ERC-20':
-        tokenDetails = await erc20TokenDetailsFromProvider(account, provider);
         return await getERC20Storage();
       case 'ERC-721':
         return await getERC721Storage();
@@ -360,7 +355,7 @@ export async function guessStorageSlot(
           return {
             index: i,
             balance,
-            balanceDecimal: formatUnits(balance, tokenDetails!.decimals),
+            balanceDecimal: formatUnits(balance, decimals),
           };
         case 'ERC-721':
           return {

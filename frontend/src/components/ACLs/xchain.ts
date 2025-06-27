@@ -163,6 +163,7 @@ export const xchain = defineACL({
             chain.value,
             contractAddress.value,
             contractDetails.type,
+            isToken(contractDetails.type) ? (contractDetails as TokenInfo).decimals : 0n,
             value,
             controls.isStillFresh,
             progress => {
