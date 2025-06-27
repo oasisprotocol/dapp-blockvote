@@ -131,6 +131,13 @@ export type InputFieldProps<DataType> = {
   validateOnChange?: boolean
 
   /**
+   * Should this field be validated even if it is hidden?
+   *
+   * Defaults to false. (Normally we don't care about hidden fields.)
+   */
+  validateEvenIfHidden?: boolean
+
+  /**
    * Should we indicate when validation is running?
    *
    * Default is true.
@@ -282,6 +289,7 @@ export function useInputFieldInternal<DataType>(
     containerClassName,
     expandHorizontally = true,
     validateOnChange,
+    validateEvenIfHidden = false,
     showValidationPending = true,
     showValidationSuccess = false,
     onValueChange,
@@ -340,7 +348,7 @@ export function useInputFieldInternal<DataType>(
   }
 
   const validate = async (params: ValidationParams): Promise<boolean> => {
-    if (!visible) {
+    if (!visible && !validateEvenIfHidden) {
       // We don't care about hidden fields
       return false
     }
@@ -413,8 +421,23 @@ export function useInputFieldInternal<DataType>(
     const oldLength = latestMessages.length
     latestMessages = latestMessages.filter(p => p.text !== message || p.type === 'info')
     setMessages(latestMessages)
-    if (messages.length !== oldLength) setIsValidated(false)
+    if (latestMessages.length !== oldLength) {
+      setIsValidated(false)
+    }
   }
+
+  useEffect(() => {
+    if (
+      !isValidated &&
+      !validationPending &&
+      !messages.length &&
+      !!validateOnChange &&
+      !enabled &&
+      !isEmpty(cleanValue)
+    ) {
+      void validate({ reason: 'change', isStillFresh: () => true })
+    }
+  }, [isValidated, validationPending, messages.length, validateOnChange, isEmpty(cleanValue), enabled])
 
   const clearMessagesAt = (location: string): void => {
     latestMessages = latestMessages.filter(p => p.location !== location)
@@ -433,7 +456,7 @@ export function useInputFieldInternal<DataType>(
     if (onValueChange) {
       onValueChange(value, () => fresh)
     }
-    if (visible) {
+    if (visible || validateEvenIfHidden) {
       if (validateOnChange && !isEmpty(cleanValue)) {
         void validate({ reason: 'change', isStillFresh: () => fresh })
       } else {
@@ -472,7 +495,7 @@ export function useInputFieldInternal<DataType>(
     validationPending: showValidationPending && validationPending,
     validationStatusMessage,
     validatorProgress,
-    visible,
+    visible: visible || (validateEvenIfHidden && hasProblems),
     enabled: isEnabled,
     whyDisabled: isEnabled ? undefined : getReason(enabled),
     containerClassName,
