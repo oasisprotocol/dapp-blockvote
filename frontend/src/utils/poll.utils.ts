@@ -119,11 +119,37 @@ export const getNftDetails = async (
   }
 }
 
+const tokenInfoCache: Map<string, TokenInfo | NFTInfo> = new Map([
+  [
+    '1:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    {
+      addr: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      chainId: 1n,
+      decimals: 6n,
+      name: 'USD Coin',
+      symbol: 'USDC',
+      totalSupply: 41377134270643937n,
+      type: 'ERC-20',
+    },
+  ],
+])
+
 export const getContractDetails = async (
   chainId: number,
   address: string,
-): Promise<TokenInfo | NFTInfo | typeof RPC_ERROR | undefined> =>
-  (await getERC20TokenDetails(chainId, address)) ?? (await getNftDetails(chainId, address))
+): Promise<TokenInfo | NFTInfo | typeof RPC_ERROR | undefined> => {
+  console.log('poll.utils.ts getContractDetails()')
+  const key = `${chainId}:${address.toLowerCase()}`
+  if (tokenInfoCache.has(key)) {
+    return tokenInfoCache.get(key)
+  } else {
+    const result = (await getERC20TokenDetails(chainId, address)) ?? (await getNftDetails(chainId, address))
+    if (!!result && result !== RPC_ERROR) {
+      tokenInfoCache.set(key, result)
+    }
+    return result
+  }
+}
 
 export const getChainDefinition = (chainId: number): ChainDefinition | undefined => chain_info[chainId]
 
