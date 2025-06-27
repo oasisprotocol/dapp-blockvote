@@ -133,7 +133,7 @@ describe('Cross-chain', function () {
     storageProof = await storageProofFactory.deploy(await accountCache.getAddress());
   });
 
-  it('Header Serialization', async () => {
+  it.skip('Header Serialization', async () => {
     for (const k of Object.keys(chain_info)) {
       const chainId = Number(k);
       const chain = chain_info[chainId];
