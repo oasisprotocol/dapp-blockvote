@@ -91,23 +91,30 @@ export const abiEncode = (types: ReadonlyArray<string | ParamType>, values: Read
   return abi.encode(types, values)
 }
 
+export const RPC_ERROR = 'rpc-error'
+
 export const getERC20TokenDetails = async (
   chainId: number,
   address: string,
-): Promise<TokenInfo | undefined> => {
+): Promise<TokenInfo | typeof RPC_ERROR | undefined> => {
   const rpc = xchainRPC(chainId)
   try {
     return await erc20TokenDetailsFromProvider(getAddress(address), rpc)
-  } catch {
+  } catch (e) {
+    if (typeof e === 'object' && ((e as any).value?.[0] as any)?.code === -32005) return RPC_ERROR
     return undefined
   }
 }
 
-export const getNftDetails = async (chainId: number, address: string): Promise<NFTInfo | undefined> => {
+export const getNftDetails = async (
+  chainId: number,
+  address: string,
+): Promise<NFTInfo | typeof RPC_ERROR | undefined> => {
   const rpc = xchainRPC(chainId)
   try {
     return await nftDetailsFromProvider(getAddress(address), rpc)
-  } catch {
+  } catch (e) {
+    if (typeof e === 'object' && ((e as any).value?.[0] as any)?.code === -32005) return RPC_ERROR
     return undefined
   }
 }
@@ -115,7 +122,7 @@ export const getNftDetails = async (chainId: number, address: string): Promise<N
 export const getContractDetails = async (
   chainId: number,
   address: string,
-): Promise<TokenInfo | NFTInfo | undefined> =>
+): Promise<TokenInfo | NFTInfo | typeof RPC_ERROR | undefined> =>
   (await getERC20TokenDetails(chainId, address)) ?? (await getNftDetails(chainId, address))
 
 export const getChainDefinition = (chainId: number): ChainDefinition | undefined => chain_info[chainId]
@@ -139,7 +146,8 @@ export const checkXchainTokenHolder = async (
       isStillFresh,
       progressCallback,
     )
-  } catch (_) {
+  } catch (e) {
+    if (typeof e === 'object' && ((e as any).value?.[0] as any)?.code === -32005) return RPC_ERROR
     return undefined
   }
 }
@@ -149,7 +157,13 @@ export const getNftType = async (chainId: number, address: string): Promise<stri
   return getNftContractType(address, rpc)
 }
 
-export const getLatestBlock = async (chainId: number) => await xchainRPC(chainId).getBlock('latest')
+export const getLatestBlock = async (chainId: number) => {
+  try {
+    return await xchainRPC(chainId).getBlock('latest')
+  } catch (e) {
+    return RPC_ERROR
+  }
+}
 
 export type CreatePollProps = {
   question: string

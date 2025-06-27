@@ -1,6 +1,6 @@
 import { CheckPermissionResults, defineACL } from './common'
 import { DecisionWithReason, denyWithReason, useOneOfField, useTextField } from '../InputFields'
-import { abiEncode, getLocalContractDetails, isValidAddress } from '../../utils/poll.utils'
+import { abiEncode, getLocalContractDetails, isValidAddress, RPC_ERROR } from '../../utils/poll.utils'
 import {
   configuredExplorerUrl,
   configuredNetworkName,
@@ -30,6 +30,9 @@ export const tokenHolder = defineACL({
         async (value, controls) => {
           controls.updateStatus({ message: 'Fetching token details...' })
           const details = await getLocalContractDetails(value)
+          if (details === RPC_ERROR) {
+            return 'Error while talking to Blockchain! Please try again.'
+          }
           if (!details) {
             return "Can't find token details!"
           }
@@ -111,11 +114,17 @@ export const tokenHolder = defineACL({
   ): Promise<CheckPermissionResults> => {
     const tokenAddress = options.token
     const tokenInfo = await getLocalContractDetails(tokenAddress)
+    const proof = new Uint8Array()
+    if (tokenInfo === RPC_ERROR) {
+      return {
+        canVote: denyWithReason('Error while talking to Blockchain! Please try again.'),
+        proof,
+      }
+    }
     const url = configuredExplorerUrl
       ? StringUtils.getAccountUrl(configuredExplorerUrl, tokenAddress)
       : undefined
     const explanation = `You need to hold some ${getLink({ label: tokenInfo?.name ?? StringUtils.truncateAddress(tokenAddress), href: url })} on ${getLink({ label: configuredNetworkName, href: configuredExplorerUrl })} to vote.`
-    const proof = new Uint8Array()
     let canVote: DecisionWithReason
     try {
       const result = 0n !== (await pollACL.canVoteOnPoll(daoAddress, proposalId, userAddress, proof))
