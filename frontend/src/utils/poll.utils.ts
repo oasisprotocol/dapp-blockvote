@@ -147,6 +147,18 @@ const tokenInfoCache: Map<string, TokenInfo | NFTInfo> = new Map([
       type: 'ERC-20',
     },
   ],
+  [
+    '1:0x5a98fcbea516cf06857215779fd812ca3bef1b32',
+    {
+      addr: '0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32',
+      chainId: 1n,
+      decimals: 18n,
+      name: 'Lido DAO Token',
+      symbol: 'LDO',
+      totalSupply: 1000000000000000000000000000n,
+      type: 'MiniMe',
+    },
+  ],
 ])
 
 export const getContractDetails = async (
