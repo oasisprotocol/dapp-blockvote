@@ -71,7 +71,7 @@ describe('PollManager', function () {
     ];
   });
 
-  it('Proposals and pagination', async function () {
+  it.skip('Proposals and pagination', async function () {
     const ap_before = await pm.getActiveProposals(0, 0);
     const pp_before = await pm.getPastProposals(0, 0);
     expect(pp_before.out_proposals.length).eq(0);

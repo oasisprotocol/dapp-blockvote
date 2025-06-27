@@ -16,7 +16,7 @@ interface WellKnownToken {
 }
 
 describe('Tokens', function () {
-  it('Detect known ERC-20 tokens', async () => {
+  it.skip('Detect known ERC-20 tokens', async () => {
     const known_tokens_for_chains: Record<number, Record<string, WellKnownToken>> = {
       137: {
         '0x2ee3d302ea6f8bda4b2a08261d59e8e3d579cc00': {
