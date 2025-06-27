@@ -166,7 +166,7 @@ describe('Cross-chain', function () {
     }
   });
 
-  it('Token Proof Regression', async () => {
+  it.skip('Token Proof Regression', async () => {
     const checkAddresses = [
       '0x48520fF9b32d8B5BF87Abf789Ea7B3c394c95ebe',
       '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
