@@ -18,10 +18,12 @@ import { decode as cborDecode, encode as cborEncode } from 'cborg'
 
 import {
   chain_info,
+  miniMeTokenDetailsFromProvider,
   erc20TokenDetailsFromProvider,
   xchainRPC,
   AclOptions,
   guessStorageSlot,
+  getMiniMeStorageSlot,
   getNftContractType,
   ChainDefinition,
   IPollACL__factory,
@@ -93,6 +95,19 @@ export const abiEncode = (types: ReadonlyArray<string | ParamType>, values: Read
 
 export const RPC_ERROR = 'rpc-error'
 
+export const getMiniMeTokenDetails = async (
+  chainId: number,
+  address: string,
+): Promise<TokenInfo | typeof RPC_ERROR | undefined> => {
+  const rpc = xchainRPC(chainId)
+  try {
+    return await miniMeTokenDetailsFromProvider(getAddress(address), rpc)
+  } catch (e) {
+    if (typeof e === 'object' && ((e as any).value?.[0] as any)?.code === -32005) return RPC_ERROR
+    return undefined
+  }
+}
+
 export const getERC20TokenDetails = async (
   chainId: number,
   address: string,
@@ -132,6 +147,18 @@ const tokenInfoCache: Map<string, TokenInfo | NFTInfo> = new Map([
       type: 'ERC-20',
     },
   ],
+  [
+    '1:0x5a98fcbea516cf06857215779fd812ca3bef1b32',
+    {
+      addr: '0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32',
+      chainId: 1n,
+      decimals: 18n,
+      name: 'Lido DAO Token',
+      symbol: 'LDO',
+      totalSupply: 1000000000000000000000000000n,
+      type: 'MiniMe',
+    },
+  ],
 ])
 
 export const getContractDetails = async (
@@ -143,7 +170,10 @@ export const getContractDetails = async (
   if (tokenInfoCache.has(key)) {
     return tokenInfoCache.get(key)
   } else {
-    const result = (await getERC20TokenDetails(chainId, address)) ?? (await getNftDetails(chainId, address))
+    const result =
+      (await getMiniMeTokenDetails(chainId, address)) ??
+      (await getERC20TokenDetails(chainId, address)) ??
+      (await getNftDetails(chainId, address))
     if (!!result && result !== RPC_ERROR) {
       tokenInfoCache.set(key, result)
     }
@@ -164,16 +194,18 @@ export const checkXchainTokenHolder = async (
 ) => {
   const rpc = xchainRPC(chainId)
   try {
-    return await guessStorageSlot(
-      rpc,
-      tokenAddress,
-      contractType,
-      decimals,
-      holderAddress,
-      'latest',
-      isStillFresh,
-      progressCallback,
-    )
+    return contractType === 'MiniMe'
+      ? await getMiniMeStorageSlot(rpc, tokenAddress, holderAddress, 'latest', isStillFresh, progressCallback)
+      : await guessStorageSlot(
+          rpc,
+          tokenAddress,
+          contractType,
+          decimals,
+          holderAddress,
+          'latest',
+          isStillFresh,
+          progressCallback,
+        )
   } catch (e) {
     if (typeof e === 'object' && ((e as any).value?.[0] as any)?.code === -32005) return RPC_ERROR
     return undefined

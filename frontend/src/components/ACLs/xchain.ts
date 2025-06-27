@@ -108,6 +108,8 @@ export const xchain = defineACL({
             if (details.symbol) output.push({ type: 'info', text: `**Symbol:** ${details.symbol}` })
 
             switch (details.type) {
+              case 'MiniMe':
+                break
               case 'ERC-20':
                 break
               case 'ERC-721':

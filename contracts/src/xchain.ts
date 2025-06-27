@@ -70,6 +70,41 @@ export function xchainRPC(chainId: number) {
   return rpc;
 }
 
+/**
+ * We need to support the MiniMeToken, because of LIDO.
+ * See the token contract here:
+ * https://github.com/aragon/minime/blob/master/contracts/MiniMeToken.sol#L293-L312
+ */
+const MiniMeTokenAbi = [
+  'function name() public view returns (string)',
+  'function symbol() public view returns (string)',
+  'function decimals() public view returns (uint8)',
+  'function totalSupply() public view returns (uint256)',
+  `function balanceOfAt(address _owner, uint _blockNumber) public constant returns (uint)`
+];
+
+const testMiniMeOwner = '0x3e40D73EB977Dc6a537aF587D48316feE66E9C8c'
+const testMiniMeBlock = 21672028
+
+export async function miniMeTokenDetailsFromProvider(
+  addr: string,
+  provider: JsonRpcProvider,
+): Promise<TokenInfo> {
+  const c = new Contract(addr, MiniMeTokenAbi, provider);
+  const network = await provider.getNetwork();
+  // Test the presence of this specific function
+  await c.balanceOfAt(testMiniMeOwner, testMiniMeBlock)
+  return {
+    addr: addr,
+    chainId: network.chainId,
+    name: await c.name(),
+    symbol: await c.symbol(),
+    decimals: await c.decimals(),
+    totalSupply: await c.totalSupply(),
+    type: 'MiniMe',
+  };
+}
+
 const ERC20Abi = [
   'function name() public view returns (string)',
   'function symbol() public view returns (string)',
@@ -259,6 +294,27 @@ export async function isERC20TokenContract(
   }
 
   return true;
+}
+
+export async function getMiniMeStorageSlot(
+  provider: JsonRpcProvider,
+  account: string,
+  holder: string,
+  blockHash = 'latest',
+  isStillFresh: () => boolean = () => true,
+  progressCallback?: (progress: string) => void | undefined,
+): Promise<{
+  index: number;
+  balance: bigint;
+  balanceDecimal?: string;
+} | null> {
+  if (progressCallback) progressCallback("Getting latest block");
+  const block = await provider.getBlock('latest')
+  if (!block) throw new Error("Can't get latest block")
+  if (progressCallback) progressCallback("Calling balanceOfAt()");
+  const contract = new Contract(account, MiniMeTokenAbi, provider);
+  const balance = await contract.balanceOfAt(holder, block.number)
+  return {index: 8, balance, balanceDecimal: balance.toString()}
 }
 
 export async function guessStorageSlot(
