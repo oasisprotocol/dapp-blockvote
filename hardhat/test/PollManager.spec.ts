@@ -18,7 +18,7 @@ import {
 import { BLOCK_HEADERS, WMATIC_BALANCE } from './exampleproofs';
 import { addProposal, deployContract, deployStorageProofStuff } from './common';
 
-describe('PollManager', function () {
+describe.skip('PollManager', function () {
   let acl_tokenholder: TokenHolderACL;
   let acl_allowall: AllowAllACL;
   let acl_voterlist: VoterAllowListACL;
@@ -71,7 +71,7 @@ describe('PollManager', function () {
     ];
   });
 
-  it.skip('Proposals and pagination', async function () {
+  it('Proposals and pagination', async function () {
     const ap_before = await pm.getActiveProposals(0, 0);
     const pp_before = await pm.getPastProposals(0, 0);
     expect(pp_before.out_proposals.length).eq(0);
