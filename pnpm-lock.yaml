@@ -198,8 +198,8 @@ importers:
         specifier: workspace:^
         version: link:../contracts
       '@oasisprotocol/sapphire-contracts':
-        specifier: ^0.2.11
-        version: 0.2.11
+        specifier: ^0.2.14
+        version: 0.2.14
       '@oasisprotocol/sapphire-hardhat':
         specifier: ^2.19.4
         version: 2.19.4(hardhat@2.22.9(ts-node@10.9.2(@swc/core@1.7.14)(@types/node@20.16.1)(typescript@5.3.3))(typescript@5.3.3))
@@ -1450,8 +1450,8 @@ packages:
   '@oasisprotocol/deoxysii@0.0.6':
     resolution: {integrity: sha512-TI51bIpChfsla9aRbjip6zvTbz6rpsqKgM7MqJvSfeFF6G5xLXQcbSC9u/1hOnOOazd7HaqA9NvaXQdeKCb3yw==}
 
-  '@oasisprotocol/sapphire-contracts@0.2.11':
-    resolution: {integrity: sha512-SS6xxiuE/O4uiWd+cIINhZimpdSdKQDHvc8fof5L6jSIinoPfIefYp+c2W+xuY2RM1CoaYO/OT0bP9/RLatcMA==}
+  '@oasisprotocol/sapphire-contracts@0.2.14':
+    resolution: {integrity: sha512-FYdJnHsnIBBME1Ggxc3pC1+NBa9HCaI/x4pDxSF2yBYbWvcFsd9M5+TJqP1BlZq6Z4D08v1+ahIcTzKF4YaGiw==}
 
   '@oasisprotocol/sapphire-ethers-v6@6.0.1':
     resolution: {integrity: sha512-JY1pKPByoboDNSQurP9Z0+QEvShK8Y9heqOjFQjhH6ZwYmiyJdhT+iJJvBtvsVzZ3SkFay0TXwQ+G5m+VBjJRA==}
@@ -3080,6 +3080,7 @@ packages:
 
   ethereumjs-abi@0.6.8:
     resolution: {integrity: sha512-Tx0r/iXI6r+lRsdvkFDlut0N08jWMnKRZ6Gkq+Nmw75lZe4e6o3EkSnkaBP5NF6+m5PTGAr9JP43N3LyeoglsA==}
+    deprecated: This library has been deprecated and usage is discouraged.
 
   ethereumjs-util@6.2.1:
     resolution: {integrity: sha512-W2Ktez4L01Vexijrm5EB6w7dg4n/TgpoYU4avuT5T3Vmnw/eCRtiBrJfQYS/DCSvDIOLn2k57GcHdeBcgVxAqw==}
@@ -3723,6 +3724,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
@@ -6652,7 +6654,7 @@ snapshots:
 
   '@oasisprotocol/deoxysii@0.0.6': {}
 
-  '@oasisprotocol/sapphire-contracts@0.2.11':
+  '@oasisprotocol/sapphire-contracts@0.2.14':
     dependencies:
       '@openzeppelin/contracts': 5.0.2
 
