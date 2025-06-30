@@ -1,5 +1,5 @@
 import { FC, useEffect } from 'react'
-import { createHashRouter, Outlet, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { AppStateContextProvider } from './providers/AppStateProvider'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -16,7 +16,7 @@ import {
   VITE_APP_LIGHT_BG,
 } from './constants/config'
 
-const router = createHashRouter([
+const router = createBrowserRouter([
   {
     path: '/',
     element: <Outlet />,
