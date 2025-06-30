@@ -31,33 +31,40 @@ This will deploy:
 - `MiniMeStorageOracle`: Verifies storage proofs for MiniMe token checkpoints
 - `MiniMeStorageACL`: Access control list for MiniMe token voting
 
-### Step 2: Cache Required Data
+### Step 2: Test End-to-End LDO Voting
 
-Before creating polls with MiniMe tokens, you need to cache the block header and token account data:
+You have two options for handling the required cache data:
 
-#### 2.1 Cache Block Header
+#### Option A: Pre-cache data (recommended for production)
+
+Pre-cache the block header and account proof before creating polls:
 
 ```bash
-# Cache block header for snapshot block (e.g., block 22800000)
+# 1. Cache block header for snapshot block
 ADD_TO_CACHE=true npx hardhat run scripts/get-block-header.ts --network sapphire-testnet
-```
 
-#### 2.2 Cache Token Account
-
-```bash
-# Cache LDO token account proof
+# 2. Cache LDO token account proof
 npx hardhat run scripts/cache-ldo-account.ts --network sapphire-testnet
-```
 
-### Step 3: Test End-to-End LDO Voting
-
-Run the complete test flow that creates a poll and votes using LDO tokens:
-
-```bash
+# 3. Run the test (uses pre-cached data)
 npx hardhat run scripts/test-ldo-poll.ts --network sapphire-testnet
 ```
 
-This script will:
+#### Option B: Cache at poll creation time
+
+Provide the cache data when creating the poll (higher gas cost, but simpler):
+
+```bash
+# Run test with inline caching
+npx hardhat run scripts/test-ldo-poll-with-caching.ts --network sapphire-testnet
+```
+
+### Why Two Approaches?
+
+- **Pre-caching (Option A)**: Lower gas costs for poll creation, data can be reused across multiple polls
+- **Inline caching (Option B)**: Simpler workflow, everything happens in one transaction, but higher gas cost
+
+The test scripts will:
 1. Check your LDO balance at the snapshot block (22800000)
 2. Create a poll with MiniMe ACL
 3. Generate storage proofs for your balance

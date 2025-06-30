@@ -13,7 +13,7 @@ const POLL_MANAGER_ADDRESS = '0x51a101CDbfEF708b5B512A2e03Ff492859c30162';
 const MINIME_ACL_ADDRESS = '0x99Cb8D3614Cc7D7945996071Aa5dFA73039eaf40';
 
 async function main() {
-  console.log('=== Test LDO Voting with MiniMe ACL ===\n');
+  console.log('=== Test LDO Voting with MiniMe ACL (with inline caching) ===\n');
   
   const [deployer] = await ethers.getSigners();
   const provider = new JsonRpcProvider(ARCHIVE_RPC);
@@ -53,24 +53,68 @@ async function main() {
   console.log(`✅ Deployer balance: ${ethers.formatEther(balance)} LDO`);
   console.log('');
   
-  // Step 1: Create poll
-  console.log('🗳️ Step 1: Creating Poll with MiniMe ACL v2...');
+  // Step 1: Get block header and account proof for caching
+  console.log('📦 Preparing cache data...');
+  
+  // Get block header
+  const block = await provider.send('eth_getBlockByNumber', [
+    ethers.toQuantity(SNAPSHOT_BLOCK),
+    false
+  ]);
+  
+  const RLP = require('rlp');
+  const headerArray = [
+    block.parentHash,
+    block.sha3Uncles,
+    block.miner,
+    block.stateRoot,
+    block.transactionsRoot,
+    block.receiptsRoot,
+    block.logsBloom,
+    ethers.toBeHex(block.difficulty),
+    ethers.toBeHex(block.number),
+    ethers.toBeHex(block.gasLimit),
+    ethers.toBeHex(block.gasUsed),
+    ethers.toBeHex(block.timestamp),
+    block.extraData,
+    block.mixHash,
+    block.nonce,
+    ethers.toBeHex(block.baseFeePerGas || 0)
+  ];
+  
+  const headerRlpBytes = '0x' + RLP.encode(headerArray).toString('hex');
+  console.log(`Block header RLP length: ${headerRlpBytes.length / 2 - 1} bytes`);
+  
+  // Get account proof
+  const accountProof = await provider.send('eth_getProof', [
+    LDO_TOKEN_ADDRESS,
+    [],
+    ethers.toQuantity(SNAPSHOT_BLOCK)
+  ]);
+  
+  const decodedAccountNodes = accountProof.accountProof.map((node: string) => RLP.decode(node));
+  const rlpAccountProof = '0x' + RLP.encode(decodedAccountNodes).toString('hex');
+  console.log(`Account proof RLP length: ${rlpAccountProof.length / 2 - 1} bytes`);
+  console.log('');
+  
+  // Step 2: Create poll with inline caching
+  console.log('🗳️ Creating Poll with MiniMe ACL (caching inline)...');
   
   const pollMetadata = {
-    name: 'LDO Voting Test with ACL v2',
-    description: 'Testing MiniMe token voting with improved storage oracle',
+    name: 'LDO Voting Test with Inline Caching',
+    description: 'Testing MiniMe token voting with cache data provided at poll creation',
     discussionUrl: 'https://example.com',
     options: ['Option A', 'Option B', 'Option C'],
   };
   
-  // Encode poll creation data
+  // Encode poll creation data WITH cache data
   const pollCreationData = ethers.AbiCoder.defaultAbiCoder().encode(
     ['tuple(tuple(bytes32,address,uint256,bool),bytes,bytes)'],
     [
       [
         [BLOCK_HASH, LDO_TOKEN_ADDRESS, LDO_BALANCE_SLOT, true], // PollConfig
-        '0x', // headerRlpBytes (already cached)
-        '0x', // rlpAccountProof (already cached)
+        headerRlpBytes,    // Block header for caching
+        rlpAccountProof,   // Account proof for caching
       ],
     ],
   );
@@ -86,7 +130,7 @@ async function main() {
     metadata: ethers.toUtf8Bytes(JSON.stringify(pollMetadata)),
   };
   
-  console.log('Creating poll transaction...');
+  console.log('Creating poll transaction (this will cache the data)...');
   const createTx = await pollManager.create(proposalParams, pollCreationData);
   console.log(`Transaction sent: ${createTx.hash}`);
   
@@ -117,8 +161,8 @@ async function main() {
   console.log(`📊 Poll ID: ${pollId}`);
   console.log('');
   
-  // Step 2: Generate proofs and vote
-  console.log('🗳️ Step 2: Voting on the poll...');
+  // Step 3: Generate proofs and vote
+  console.log('🗳️ Voting on the poll...');
   
   // Generate storage proofs
   const checkpointSlot = ethers.keccak256(baseSlot);
@@ -130,7 +174,6 @@ async function main() {
     ethers.toQuantity(SNAPSHOT_BLOCK)
   ]);
   
-  const RLP = require('rlp');
   const encodedProofs = proof.storageProof.map((p: any) => 
     '0x' + RLP.encode(p.proof.map((node: string) => RLP.decode(node))).toString('hex')
   );
@@ -168,7 +211,7 @@ async function main() {
   }
   
   console.log('\n✅ Test complete!');
-  console.log('Successfully created a poll and voted using MiniMe ACL with the improved storage oracle.');
+  console.log('Successfully created a poll with inline caching and voted using MiniMe ACL.');
 }
 
 main()
