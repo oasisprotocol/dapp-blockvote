@@ -4,3 +4,5 @@ cache/
 coverage*
 typechain-types/
 abis/
+
+.env
