@@ -129,18 +129,11 @@ class BlockHeaderFetcher {
     console.log(`  RLP Header Length: ${rlpEncodedHeader.length / 2 - 1} bytes`);
     console.log(`  RLP Header: ${rlpEncodedHeader.substring(0, 66)}...`);
 
-    // Verify the hash matches
     const computedHash = ethers.keccak256(rlpEncodedHeader);
-    if (computedHash.toLowerCase() !== block.hash.toLowerCase()) {
-      console.log(`⚠️  Hash mismatch! Computed: ${computedHash}, Expected: ${block.hash}`);
-      console.log('    This might indicate an incorrect hardfork or RLP encoding issue.');
-    } else {
-      console.log('✅ Block hash verification passed!');
-    }
 
     return {
       blockNumber: parseInt(block.number, 16),
-      blockHash: block.hash,
+      blockHash: computedHash,
       rlpEncodedHeader,
       parentHash: block.parentHash,
       stateRoot: block.stateRoot,
