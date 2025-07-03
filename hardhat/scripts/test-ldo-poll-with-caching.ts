@@ -5,8 +5,7 @@ import { JsonRpcProvider } from 'ethers';
 const ARCHIVE_RPC = process.env.ARCHIVE_RPC;
 const LDO_TOKEN_ADDRESS = '0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32';
 const LDO_BALANCE_SLOT = 8;
-const SNAPSHOT_BLOCK = 22800000;
-const BLOCK_HASH = '0x70a1d9f40f5d5e28a20c6e058c78ce310337fd7b4c8866d02fa0751a1caa14f3';
+const SNAPSHOT_BLOCK = 22837817;
 
 // Sapphire Testnet contracts
 const POLL_MANAGER_ADDRESS = '0x51a101CDbfEF708b5B512A2e03Ff492859c30162';
@@ -62,7 +61,11 @@ async function main() {
     false
   ]);
   
+  const blockHash = block.hash;
+  console.log(`Block hash: ${blockHash}`);
+  
   const RLP = require('rlp');
+  
   const headerArray = [
     block.parentHash,
     block.sha3Uncles,
@@ -79,11 +82,19 @@ async function main() {
     block.extraData,
     block.mixHash,
     block.nonce,
-    ethers.toBeHex(block.baseFeePerGas || 0)
+    ethers.toBeHex(block.baseFeePerGas || 0),
+    // Cancun-specific fields
+    ethers.toBeHex(block.withdrawalsRoot || '0x'),
+    ethers.toBeHex(block.blobGasUsed || 0),
+    ethers.toBeHex(block.excessBlobGas || 0),
+    ethers.toBeHex(block.parentBeaconBlockRoot || '0x')
   ];
   
   const headerRlpBytes = '0x' + RLP.encode(headerArray).toString('hex');
   console.log(`Block header RLP length: ${headerRlpBytes.length / 2 - 1} bytes`);
+  
+  const computedHash = ethers.keccak256(headerRlpBytes);
+  const blockHashForPoll = computedHash;
   
   // Get account proof
   const accountProof = await provider.send('eth_getProof', [
@@ -112,7 +123,7 @@ async function main() {
     ['tuple(tuple(bytes32,address,uint256,bool),bytes,bytes)'],
     [
       [
-        [BLOCK_HASH, LDO_TOKEN_ADDRESS, LDO_BALANCE_SLOT, true], // PollConfig
+        [blockHashForPoll, LDO_TOKEN_ADDRESS, LDO_BALANCE_SLOT, true], // PollConfig
         headerRlpBytes,    // Block header for caching
         rlpAccountProof,   // Account proof for caching
       ],
