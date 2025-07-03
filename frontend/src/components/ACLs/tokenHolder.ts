@@ -14,7 +14,6 @@ import { getLink } from '../../utils/markdown.utils'
 
 export const tokenHolder = defineACL({
   value: 'acl_tokenHolder',
-  address: VITE_CONTRACT_ACL_TOKENHOLDER,
   costEstimation: 0.2,
   label: `Active Token or NFT balance on ${configuredNetworkName}`,
   description:
@@ -101,6 +100,7 @@ export const tokenHolder = defineACL({
   getAclOptions: props => {
     if (!props.tokenAddress) throw new Error('Internal errors: parameter mismatch, addresses missing.')
     return {
+      aclAddress: VITE_CONTRACT_ACL_TOKENHOLDER,
       data: abiEncode(['address'], [props.tokenAddress]),
       options: { token: props.tokenAddress },
       flags: props.flags,

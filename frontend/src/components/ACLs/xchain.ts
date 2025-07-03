@@ -45,9 +45,17 @@ import { getLink } from '../../utils/markdown.utils'
 
 const RPC_ERROR_MESSAGE = 'Error while communicating with blockchain! Click to try again.'
 
+type ConfigValues = {
+  chainId: number
+  contractAddress: string
+  contractDetails: TokenInfo | NFTInfo
+  slotNumber: number
+  blockHash: string
+  flags: bigint
+}
+
 export const xchain = defineACL({
   value: 'acl_xchain',
-  address: VITE_CONTRACT_ACL_STORAGEPROOF,
   label: 'Token Snapshot voting',
   costEstimation: 0.2,
   description: 'take a snapshot of token or NFT balances from another chain',
@@ -77,6 +85,7 @@ export const xchain = defineACL({
 
     const explorer = (getChainDefinition(chain.value)?.explorers ?? [])[0]
     const explorerUrl = explorer?.url
+    const [contractDetails, setContractDetails] = useState<TokenInfo | NFTInfo>()
 
     const contractAddress = useTextField({
       name: 'contractAddress',
@@ -94,6 +103,7 @@ export const xchain = defineACL({
           const details = await getContractDetails(chain.value, value)
           if (details === RPC_ERROR) return RPC_ERROR_MESSAGE
           if (details) {
+            setContractDetails(details)
             const output: ValidatorOutput[] = []
             output.push(
               { type: 'info', text: `**Type:** ${details.type}` },
@@ -156,8 +166,6 @@ export const xchain = defineACL({
         value => (isValidAddress(value) ? undefined : "This doesn't seem to be a valid address."),
         async (value, controls) => {
           if (!hasValidTokenAddress) return `Please set ${contractAddress.label} first!`
-          const contractDetails = await getContractDetails(chain.value, contractAddress.value)
-          if (contractDetails === RPC_ERROR) return RPC_ERROR_MESSAGE
           if (!contractDetails) return "Can't find token details!"
           const slot = await checkXchainTokenHolder(
             chain.value,
@@ -242,15 +250,18 @@ export const xchain = defineACL({
       }
     }
 
+    const values: ConfigValues = {
+      chainId: chain.value,
+      contractAddress: contractAddress.value,
+      contractDetails: contractDetails!,
+      slotNumber,
+      blockHash,
+      flags: weightToFlags(voteWeighting.value),
+    }
+
     return {
       fields: [chain, contractAddress, walletAddress, voteWeighting],
-      values: {
-        chainId: chain.value,
-        contractAddress: contractAddress.value,
-        slotNumber,
-        blockHash,
-        flags: weightToFlags(voteWeighting.value),
-      },
+      values,
     }
   },
 
@@ -276,6 +287,7 @@ export const xchain = defineACL({
     }
 
     return {
+      aclAddress: VITE_CONTRACT_ACL_STORAGEPROOF,
       data: abiEncode(
         ['tuple(tuple(bytes32,address,uint256),bytes,bytes)'],
         [[[blockHash, contractAddress, slotNumber], headerRlpBytes, rlpAccountProof]],

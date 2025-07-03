@@ -27,22 +27,17 @@ export type ACL<Name, ConfigInputValues, Options extends AclOptions> = Choice<Na
   useConfiguration: (selected: boolean) => { fields: FieldConfiguration; values: ConfigInputValues }
 
   /**
-   * The address of the ACL contract to use
-   */
-  address: string
-
-  /**
    * Compose the ACL options when creating a poll
    */
   getAclOptions:
     | ((
         config: ConfigInputValues,
         context?: ExecutionContext,
-      ) => { data: string; options: Options; flags: bigint })
+      ) => { aclAddress: string; data: string; options: Options; flags: bigint })
     | ((
         config: ConfigInputValues,
         context?: ExecutionContext,
-      ) => Promise<{ data: string; options: Options; flags: bigint }>)
+      ) => Promise<{ aclAddress: string; data: string; options: Options; flags: bigint }>)
 
   /**
    * Attempt to recognize if this ACL is managing a given poll, based on ACL options
