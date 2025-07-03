@@ -72,21 +72,18 @@ class BlockHeaderFetcher {
       }
     }
 
-    // Add withdrawal root for Cancun hardfork (Shanghai+ actually)
+    // Add Cancun-specific fields
     if (hardfork === 'cancun') {
+      // withdrawalsRoot (required for Cancun)
       if (block.withdrawalsRoot) {
-        items.push(this.bigIntToUnpaddedBytes(BigInt(block.withdrawalsRoot)));
+        items.push(ethers.getBytes(block.withdrawalsRoot));
       }
-    }
-
-    // Add blob fields for Cancun hardfork
-    if (hardfork === 'cancun') {
-      if (block.blobGasUsed !== undefined) {
-        items.push(this.bigIntToUnpaddedBytes(BigInt(block.blobGasUsed)));
-      }
-      if (block.excessBlobGas !== undefined) {
-        items.push(this.bigIntToUnpaddedBytes(BigInt(block.excessBlobGas)));
-      }
+      
+      // blobGasUsed and excessBlobGas (required for Cancun)
+      items.push(this.bigIntToUnpaddedBytes(BigInt(block.blobGasUsed || 0)));
+      items.push(this.bigIntToUnpaddedBytes(BigInt(block.excessBlobGas || 0)));
+      
+      // parentBeaconBlockRoot (required for Cancun)
       if (block.parentBeaconBlockRoot) {
         items.push(ethers.getBytes(block.parentBeaconBlockRoot));
       }
@@ -152,22 +149,30 @@ class BlockHeaderFetcher {
   }
 
   /**
+   * Determine hardfork based on block number
+   */
+  private getHardforkForBlock(blockNumber: number, chainId: number): string {
+    if (chainId === 1) {
+      // Ethereum mainnet hardfork blocks
+      if (blockNumber >= 19426587) return 'cancun';  // Cancun (March 13, 2024)
+      if (blockNumber >= 12965000) return 'london';  // London (August 5, 2021)
+      return 'pre-london';
+    }
+    
+    // Default to london for other chains
+    return 'london';
+  }
+
+  /**
    * Get network info and determine appropriate hardfork
    */
   async getNetworkInfo(): Promise<{ chainId: number; hardfork: string }> {
     const network = await this.provider.getNetwork();
     const chainId = Number(network.chainId);
 
-    // Simple hardfork detection based on current block number
+    // Get current block number
     const currentBlock = await this.provider.getBlockNumber();
-
-    let hardfork = 'london';
-    if (chainId === 1) {
-      // Ethereum mainnet
-      if (currentBlock >= 18000000)
-        hardfork = 'cancun'; // Rough estimate
-      else if (currentBlock >= 12965000) hardfork = 'london'; // London block
-    }
+    const hardfork = this.getHardforkForBlock(currentBlock, chainId);
 
     console.log(`🌐 Network: Chain ID ${chainId}`);
     console.log(`📊 Current Block: ${currentBlock}`);
@@ -204,8 +209,8 @@ async function main() {
   const fetcher = new BlockHeaderFetcher(config.rpcUrl);
 
   try {
-    // Get network info and determine hardfork
-    const { chainId, hardfork } = await fetcher.getNetworkInfo();
+    // Get network info
+    const { chainId } = await fetcher.getNetworkInfo();
     console.log('');
 
     // Determine block number
@@ -216,6 +221,9 @@ async function main() {
       console.log(`📊 Using block ${blockNumber} (current - 10)`);
     }
 
+    // Determine hardfork for the specific block
+    const hardfork = fetcher['getHardforkForBlock'](blockNumber, chainId);
+    console.log(`⚙️  Block ${blockNumber} uses hardfork: ${hardfork}`);
     console.log('');
 
     // Fetch and encode block header
@@ -254,7 +262,7 @@ async function main() {
         const tx = await headerCache.add(headerData.rlpEncodedHeader);
         console.log(`Transaction sent: ${tx.hash}`);
         const receipt = await tx.wait();
-        console.log(`✅ Header cached! Gas used: ${receipt.gasUsed.toString()}`);
+        console.log(`✅ Header cached! Gas used: ${receipt?.gasUsed.toString()}`);
       }
     } else {
       console.log('\n💡 To add this header to the cache, run:');
