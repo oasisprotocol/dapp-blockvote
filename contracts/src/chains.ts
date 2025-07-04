@@ -23,6 +23,7 @@ export interface ChainDefinition {
 }
 
 const INFURA_API_KEY = 'e9b08cc1b55b430494f6cf5259b2a560';
+const ALCHEMY_API_KEY = '9d1-4QZ0JTIGOuhZM4VJ6_vy0Z2YAuA1';
 
 // NOTE: many chains are defined in https://github.com/thirdweb-dev/js/tree/main/legacy_packages/chains/chains
 
@@ -32,9 +33,9 @@ export const chain_info: Record<number, ChainDefinition> = {
     chain: 'ETH',
     icon: 'ethereum',
     rpcUrls: [
-      //`https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`
+      `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
       //`https://1.rpc.thirdweb.com/${THIRDWEB_API_KEY}`,
-      `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
+      // `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
     ],
     features: [{ name: 'EIP155' }, { name: 'EIP1559' }],
     hardfork: 'cancun',
