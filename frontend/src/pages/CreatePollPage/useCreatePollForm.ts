@@ -367,6 +367,7 @@ export const useCreatePollForm = () => {
         setIsFrozen(true)
         const aclConfigValues = currentAclConfig.values
         const {
+          aclAddress,
           data: aclData,
           options: aclOptions,
           flags: pollFlags,
@@ -379,7 +380,7 @@ export const useCreatePollForm = () => {
           description: description.value,
           answers: answers.value,
           isHidden: hidden.value,
-          aclAddress: currentAcl.address,
+          aclAddress,
           aclData,
           aclOptions,
           pollFlags,

@@ -4,15 +4,22 @@ import '@nomicfoundation/hardhat-ethers';
 import 'hardhat-tracer';
 import { promises as fs } from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
 
 import canonicalize from 'canonicalize';
 import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { HardhatUserConfig, task } from 'hardhat/config';
 
+// Load environment variables
+dotenv.config();
+
 import '@typechain/hardhat';
 
 import './tasks/deploy';
 import './tasks/poll-close';
+import './tasks/deploy-minime-acl';
+import './tasks/deploy-minime-token';
+import './tasks/create-transfers';
 
 const TASK_EXPORT_ABIS = 'export-abis';
 
@@ -82,15 +89,28 @@ const config: HardhatUserConfig = {
     },
   },
   solidity: {
-    version: '0.8.28',
-    settings: {
-      evmVersion: "paris",
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: '0.8.28',
+        settings: {
+          evmVersion: "paris",
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          viaIR: true,
+        },
       },
-      viaIR: true,
-    },
+      {
+        version: '0.4.24',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
   },
   typechain: {
     target: 'ethers-v6',

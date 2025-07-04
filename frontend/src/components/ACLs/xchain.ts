@@ -23,9 +23,12 @@ import {
 import {
   AclOptionsXchain,
   fetchAccountProof,
+  fetchMiniMeAccountProof,
   fetchStorageProof,
   fetchStorageValue,
   getBlockHeaderRLP,
+  getMiniMeAccountBalance,
+  getMiniMeBlockHeaderRLP,
   xchainRPC,
 } from '@oasisprotocol/blockvote-contracts'
 import type { TokenInfo, NFTInfo } from '@oasisprotocol/blockvote-contracts'
@@ -36,8 +39,9 @@ import {
   VITE_APP_HARDWIRED_TOKEN_HOLDER,
   VITE_APP_HARDWIRED_VOTE_WEIGHTING,
   VITE_CONTRACT_ACL_STORAGEPROOF,
+  VITE_CONTRACT_ACL_MINIME_STORAGE,
 } from '../../constants/config'
-import { BytesLike, getBytes, getUint, hexlify } from 'ethers'
+import { BytesLike, getBytes, getUint, hexlify, keccak256 } from 'ethers'
 import { useMemo, useState } from 'react'
 import { StringUtils } from '../../utils/string.utils'
 import { FLAG_WEIGHT_LOG10, FLAG_WEIGHT_ONE } from '../../types'
@@ -45,9 +49,17 @@ import { getLink } from '../../utils/markdown.utils'
 
 const RPC_ERROR_MESSAGE = 'Error while communicating with blockchain! Click to try again.'
 
+type ConfigValues = {
+  chainId: number
+  contractAddress: string
+  contractDetails: TokenInfo | NFTInfo
+  slotNumber: number
+  blockHash: string
+  flags: bigint
+}
+
 export const xchain = defineACL({
   value: 'acl_xchain',
-  address: VITE_CONTRACT_ACL_STORAGEPROOF,
   label: 'Token Snapshot voting',
   costEstimation: 0.2,
   description: 'take a snapshot of token or NFT balances from another chain',
@@ -77,6 +89,7 @@ export const xchain = defineACL({
 
     const explorer = (getChainDefinition(chain.value)?.explorers ?? [])[0]
     const explorerUrl = explorer?.url
+    const [contractDetails, setContractDetails] = useState<TokenInfo | NFTInfo>()
 
     const contractAddress = useTextField({
       name: 'contractAddress',
@@ -94,6 +107,7 @@ export const xchain = defineACL({
           const details = await getContractDetails(chain.value, value)
           if (details === RPC_ERROR) return RPC_ERROR_MESSAGE
           if (details) {
+            setContractDetails(details)
             const output: ValidatorOutput[] = []
             output.push(
               { type: 'info', text: `**Type:** ${details.type}` },
@@ -108,6 +122,8 @@ export const xchain = defineACL({
             if (details.symbol) output.push({ type: 'info', text: `**Symbol:** ${details.symbol}` })
 
             switch (details.type) {
+              case 'MiniMe':
+                break
               case 'ERC-20':
                 break
               case 'ERC-721':
@@ -156,8 +172,6 @@ export const xchain = defineACL({
         value => (isValidAddress(value) ? undefined : "This doesn't seem to be a valid address."),
         async (value, controls) => {
           if (!hasValidTokenAddress) return `Please set ${contractAddress.label} first!`
-          const contractDetails = await getContractDetails(chain.value, contractAddress.value)
-          if (contractDetails === RPC_ERROR) return RPC_ERROR_MESSAGE
           if (!contractDetails) return "Can't find token details!"
           const slot = await checkXchainTokenHolder(
             chain.value,
@@ -242,28 +256,36 @@ export const xchain = defineACL({
       }
     }
 
+    const values: ConfigValues = {
+      chainId: chain.value,
+      contractAddress: contractAddress.value,
+      contractDetails: contractDetails!,
+      slotNumber,
+      blockHash,
+      flags: weightToFlags(voteWeighting.value),
+    }
+
     return {
       fields: [chain, contractAddress, walletAddress, voteWeighting],
-      values: {
-        chainId: chain.value,
-        contractAddress: contractAddress.value,
-        slotNumber,
-        blockHash,
-        flags: weightToFlags(voteWeighting.value),
-      },
+      values,
     }
   },
 
   getAclOptions: async (
-    { chainId, contractAddress, slotNumber, blockHash, flags },
+    { chainId, contractAddress, contractDetails, slotNumber, blockHash, flags }: ConfigValues,
     context = basicExecutionContext,
   ) => {
     const rpc = xchainRPC(chainId)
+    const isMiniMe = contractDetails.type === 'MiniMe'
     context.setStatus('Getting block header RLP')
-    const headerRlpBytes = await getBlockHeaderRLP(rpc, blockHash)
+    const headerRlpBytes = isMiniMe
+      ? await getMiniMeBlockHeaderRLP(rpc, { hash: blockHash })
+      : await getBlockHeaderRLP(rpc, blockHash)
     // console.log('headerRlpBytes', headerRlpBytes);
     context.setStatus('Fetching account proof')
-    const rlpAccountProof = await fetchAccountProof(rpc, blockHash, contractAddress)
+    const rlpAccountProof = isMiniMe
+      ? await fetchMiniMeAccountProof(rpc, { hash: blockHash }, contractAddress)
+      : await fetchAccountProof(rpc, blockHash, contractAddress)
     // console.log('rlpAccountProof', rlpAccountProof);
 
     const options: AclOptionsXchain = {
@@ -275,14 +297,31 @@ export const xchain = defineACL({
       },
     }
 
-    return {
-      data: abiEncode(
-        ['tuple(tuple(bytes32,address,uint256),bytes,bytes)'],
-        [[[blockHash, contractAddress, slotNumber], headerRlpBytes, rlpAccountProof]],
-      ),
-      options,
-      flags,
-    }
+    return isMiniMe
+      ? {
+          aclAddress: VITE_CONTRACT_ACL_MINIME_STORAGE,
+          data: abiEncode(
+            ['tuple(tuple(bytes32,address,uint256,bool),bytes,bytes)'],
+            [
+              [
+                [keccak256(headerRlpBytes), contractAddress, slotNumber, true], // PollConfig
+                headerRlpBytes, // Block header for caching
+                rlpAccountProof, // Account proof for caching
+              ],
+            ],
+          ),
+          options,
+          flags,
+        }
+      : {
+          aclAddress: VITE_CONTRACT_ACL_STORAGEPROOF,
+          data: abiEncode(
+            ['tuple(tuple(bytes32,address,uint256),bytes,bytes)'],
+            [[[blockHash, contractAddress, slotNumber], headerRlpBytes, rlpAccountProof]],
+          ),
+          options,
+          flags,
+        }
   },
 
   isThisMine: options => 'xchain' in options,
@@ -327,16 +366,44 @@ export const xchain = defineACL({
       if (!tokenInfo) throw new Error("Can't load token details")
       explanation = `This poll is only for those who have hold ${getLink({ label: tokenInfo?.name ?? StringUtils.truncateAddress(tokenInfo.addr), href: tokenUrl })} on ${getLink({ label: chainDefinition.name, href: explorerUrl })} when the poll was created.`
       let isBalancePositive = false
-      const holderBalance = getUint(
-        await fetchStorageValue(provider, blockHash, tokenAddress, slot, userAddress),
-      )
-      if (holderBalance > BigInt(0)) {
-        // Only attempt to get a proof if the balance is non-zero
-        proof = await fetchStorageProof(provider, blockHash, tokenAddress, slot, userAddress)
-        const result = await pollACL.canVoteOnPoll(daoAddress, proposalId, userAddress, proof)
-        if (0n !== result) {
-          isBalancePositive = true
-          canVote = true
+
+      if (tokenInfo.type === 'MiniMe') {
+        const {
+          balance: holderBalance,
+          balanceString,
+          voteData,
+        } = await getMiniMeAccountBalance(
+          provider,
+          tokenAddress,
+          userAddress,
+          slot,
+          {
+            hash: blockHash,
+          },
+          true,
+        )
+
+        if (holderBalance > 0n) {
+          console.log('Holder balance seems to be', balanceString)
+          const result = await pollACL.canVoteOnPoll(daoAddress, proposalId, userAddress, voteData!)
+          if (result > 0) {
+            isBalancePositive = true
+            canVote = true
+            proof = voteData!
+          }
+        }
+      } else {
+        const holderBalance = getUint(
+          await fetchStorageValue(provider, blockHash, tokenAddress, slot, userAddress),
+        )
+        if (holderBalance > BigInt(0)) {
+          // Only attempt to get a proof if the balance is non-zero
+          proof = await fetchStorageProof(provider, blockHash, tokenAddress, slot, userAddress)
+          const result = await pollACL.canVoteOnPoll(daoAddress, proposalId, userAddress, proof)
+          if (0n !== result) {
+            isBalancePositive = true
+            canVote = true
+          }
         }
       }
       if (!isBalancePositive) {
