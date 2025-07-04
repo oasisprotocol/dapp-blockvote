@@ -219,6 +219,7 @@ export const useCreatePollForm = () => {
     enabled: isFrozen ? deny(frozenMassage) : !VITE_APP_HARDWIRED_RESULTS_DISPLAY,
     visible: !designDecisions.hideHardwiredSettings || !VITE_APP_HARDWIRED_RESULTS_DISPLAY,
     hideDisabledChoices: designDecisions.hideDisabledSelectOptions,
+    hideIfDisabled: designDecisions.hideDisabledSelects,
   } as const)
 
   const authorResultDisplayType = useOneOfField({
@@ -252,6 +253,7 @@ export const useCreatePollForm = () => {
     ],
     hideDisabledChoices: designDecisions.hideDisabledSelectOptions,
     disableIfOnlyOneVisibleChoice: designDecisions.disableSelectsWithOnlyOneVisibleOption,
+    hideIfDisabled: designDecisions.hideDisabledSelects,
   } as const)
 
   const hasCompletionDate = useBooleanField({

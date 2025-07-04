@@ -18,6 +18,7 @@ type OneOfFieldProps<DataType = string> = Omit<
   requiredMessage?: string
   hideDisabledChoices?: boolean
   disableIfOnlyOneVisibleChoice?: boolean
+  hideIfDisabled?: boolean
 }
 
 export type OneOfFieldControls<DataType> = InputFieldControls<DataType> & {
@@ -30,6 +31,7 @@ export function useOneOfField<DataType>(props: OneOfFieldProps<DataType>): OneOf
     requiredMessage = 'Please select an option!',
     hideDisabledChoices,
     disableIfOnlyOneVisibleChoice,
+    hideIfDisabled,
   } = props
   const visibleChoices = choices.filter(
     choice => !choice.hidden && (!hideDisabledChoices || getVerdict(choice.enabled, true)),
@@ -61,6 +63,7 @@ export function useOneOfField<DataType>(props: OneOfFieldProps<DataType>): OneOf
 
   return {
     ...controls,
+    visible: controls.visible && (controls.enabled || !hideIfDisabled),
     choices,
   }
 }
