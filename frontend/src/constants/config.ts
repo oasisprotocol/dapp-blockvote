@@ -123,6 +123,7 @@ export const designDecisions = {
   showInaccessiblePollCheckbox: true,
   hideDisabledSelectOptions: true,
   disableSelectsWithOnlyOneVisibleOption: true,
+  hideDisabledSelects: true,
   showSubmitButton: false,
   hidePollCardsWithErrors: true,
   hideHardwiredSettings: false,
