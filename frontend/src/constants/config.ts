@@ -129,6 +129,7 @@ export const designDecisions = {
   showSubmitButton: false,
   hidePollCardsWithErrors: true,
   hideHardwiredSettings: false,
+  hideUnderConstructionFeatures: false,
 }
 
 export const appDescription =
