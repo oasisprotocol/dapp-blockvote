@@ -108,6 +108,7 @@ export const useCreatePollForm = () => {
     name: 'customCSS',
     label: 'I want to create a customized theme for the poll',
     enabled: deny('Coming soon!'),
+    hidden: designDecisions.hideUnderConstructionFeatures,
   })
 
   const hidden = useBooleanField({
@@ -198,6 +199,7 @@ export const useCreatePollForm = () => {
         value: 'end_result_only',
         label: 'Show only the end result',
         enabled: deny('Coming soon'),
+        hidden: designDecisions.hideUnderConstructionFeatures,
       },
       {
         value: 'percentages',
@@ -239,7 +241,9 @@ export const useCreatePollForm = () => {
       {
         value: 'voters',
         label: 'Also show the list of voters',
-        hidden: ['percentages_and_votes', 'percentages_and_voters'].includes(resultDisplayType.value),
+        hidden:
+          ['percentages_and_votes', 'percentages_and_voters'].includes(resultDisplayType.value) ||
+          designDecisions.hideUnderConstructionFeatures,
         enabled: deny('Coming soon'),
         description:
           'The individual votes will still be hidden, only the existence of the vote will be published.',
@@ -249,6 +253,7 @@ export const useCreatePollForm = () => {
         label: 'Also show the votes for each answer',
         description: 'The author can see who voted for what.',
         enabled: deny('Coming soon'),
+        hidden: designDecisions.hideUnderConstructionFeatures,
       },
     ],
     hideDisabledChoices: designDecisions.hideDisabledSelectOptions,
