@@ -12,6 +12,7 @@ import { ContractContextProvider } from './providers/ContractProvider'
 import {
   VITE_APP_DARK_BG,
   VITE_APP_DASHBOARD_BG,
+  VITE_APP_DASHBOARD_CARD_COLOR,
   VITE_APP_LANDING_BG,
   VITE_APP_LIGHT_BG,
 } from './constants/config'
@@ -43,6 +44,8 @@ export const App: FC = () => {
     if (VITE_APP_LANDING_BG) document.documentElement.style.setProperty('--landing-bg', VITE_APP_LANDING_BG)
     if (VITE_APP_DASHBOARD_BG)
       document.documentElement.style.setProperty('--dashboard-bg', VITE_APP_DASHBOARD_BG)
+    if (VITE_APP_DASHBOARD_CARD_COLOR)
+      document.documentElement.style.setProperty('--dashboard-card-color', VITE_APP_DASHBOARD_CARD_COLOR)
     if (VITE_APP_LIGHT_BG) document.documentElement.style.setProperty('--light-bg', VITE_APP_LIGHT_BG)
     if (VITE_APP_DARK_BG) document.documentElement.style.setProperty('--dark-bg', VITE_APP_DARK_BG)
   }, [])
