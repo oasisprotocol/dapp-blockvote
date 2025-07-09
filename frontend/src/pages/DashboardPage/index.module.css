@@ -44,7 +44,7 @@
 
 .noPolls {
   display: flex;
-  background: #e6e5ff;
+  background: var(--dashboard-bg);
   flex-direction: column;
   border: 1px solid #01001f;
   border-radius: 12px;

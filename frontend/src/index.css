@@ -16,6 +16,7 @@
   --deep-lemon: #f5c418;
   --landing-bg: url('background.svg') center/cover;
   --dashboard-bg: linear-gradient(180deg, #e6e5ff 0%, #d2d1ff 100%);
+  --dashboard-color: #e6e5ff;
   --light-bg: white;
   --dark-bg: #130fff;
 }
