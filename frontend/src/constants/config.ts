@@ -37,6 +37,8 @@ const {
   VITE_APP_HARDWIRED_TOKEN_HOLDER,
   VITE_APP_HARDWIRED_VOTE_WEIGHTING,
   VITE_APP_HARDWIRED_RESULTS_DISPLAY,
+  VITE_APP_HIDE_HARDWIRED_SETTINGS,
+  VITE_APP_HIDE_UNDER_CONSTRUCTION_FEATURES,
 } = import.meta.env
 
 const VITE_NETWORK_BIGINT: bigint = BigInt(ENV_VITE_NETWORK) ?? 0n
@@ -128,8 +130,8 @@ export const designDecisions = {
   hideDisabledSelects: true,
   showSubmitButton: false,
   hidePollCardsWithErrors: true,
-  hideHardwiredSettings: false,
-  hideUnderConstructionFeatures: false,
+  hideHardwiredSettings: VITE_APP_HIDE_HARDWIRED_SETTINGS ?? false,
+  hideUnderConstructionFeatures: VITE_APP_HIDE_UNDER_CONSTRUCTION_FEATURES ?? false,
 }
 
 export const appDescription =
