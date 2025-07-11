@@ -5,6 +5,7 @@ import svgr from 'vite-plugin-svgr'
 import react from '@vitejs/plugin-react-swc'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 import { visualizer } from 'rollup-plugin-visualizer'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -29,6 +30,7 @@ export default defineConfig({
       },
     },
     visualizer(),
+    tailwindcss(),
   ],
   base: './',
   build: {

@@ -27,6 +27,7 @@
     "@oasisprotocol/sapphire-paratime": "^2.0.1",
     "@phosphor-icons/core": "^2.0.8",
     "@radix-ui/react-tabs": "^1.1.1",
+    "@tailwindcss/vite": "^4.1.11",
     "cborg": "1.10.2",
     "ethers": "6.10.0",
     "framer-motion": "^11.5.4",
@@ -42,6 +43,9 @@
     "react-router-dom": "^6.22.2",
     "react-share": "^5.1.0",
     "recharts": "^2.12.2",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "^4.1.11",
+    "tw-animate-css": "^1.3.5",
     "uuid": "^10.0.0"
   },
   "devDependencies": {

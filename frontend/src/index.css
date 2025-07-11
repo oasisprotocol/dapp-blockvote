@@ -1,3 +1,6 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
 :root {
   --white: #fff;
   --palatinate-blue: #2c3bd5;
