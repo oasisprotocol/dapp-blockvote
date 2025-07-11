@@ -26,6 +26,7 @@
     "@oasisprotocol/sapphire-ethers-v6": "^6.0.1",
     "@oasisprotocol/sapphire-paratime": "^2.0.1",
     "@phosphor-icons/core": "^2.0.8",
+    "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-tabs": "^1.1.1",
     "@tailwindcss/vite": "^4.1.11",
     "cborg": "1.10.2",
