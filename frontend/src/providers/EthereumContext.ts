@@ -18,6 +18,7 @@ export interface EthereumContext {
   readonly isConnected: boolean
   readonly explorerBaseUrl: string | undefined
   connectWallet: () => Promise<void>
+  disconnectWallet: () => Promise<void>
   addNetwork: (network: number | undefined) => Promise<void>
   switchNetwork: (network?: number | undefined) => Promise<void>
 }
