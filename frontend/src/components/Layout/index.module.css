@@ -14,7 +14,6 @@
 }
 
 .landingLayout {
-  height: 100dvh;
   background: var(--landing-bg);
   color: var(--navy-blue);
 }

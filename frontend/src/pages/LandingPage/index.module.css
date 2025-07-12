@@ -1,18 +1,9 @@
 .landing {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0px;
-  gap: 24px;
-
-  position: absolute;
-  width: 416px;
-  height: 242px;
-  left: calc(50% - 416px / 2);
-  top: calc(50% - 242px / 2);
-  color: black;
-
-  text-align: center;
+  > div {
+    padding: 0;
+    max-width: 416px;
+    color: black;
+  }
 
   h2 {
     font-style: normal;

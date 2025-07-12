@@ -65,7 +65,7 @@ export const Layout: FC<
             connectButton
           )}
         </header>
-        <section>
+        <section className={'flex flex-1'}>
           {appError && (
             <Alert
               type="error"

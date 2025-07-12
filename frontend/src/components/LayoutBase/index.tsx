@@ -7,8 +7,12 @@ import { VITE_APP_LOGO_FILE } from '../../constants/config'
 export const LayoutBase: FC<PropsWithChildren & { extraClasses?: string }> = ({ children, extraClasses }) => {
   return (
     <div className={StringUtils.clsx(classes.layout, extraClasses)}>
-      <main className={classes.main}>{children}</main>
-      <footer className={classes.footer}>{VITE_APP_LOGO_FILE && <PoweredByLogo />}</footer>
+      <main className={StringUtils.clsx(classes.main, 'flex-1')}>{children}</main>
+      {VITE_APP_LOGO_FILE && (
+        <footer className={classes.footer}>
+          <PoweredByLogo />
+        </footer>
+      )}
     </div>
   )
 }
