@@ -208,6 +208,20 @@ export const EthereumContextProvider: FC<PropsWithChildren> = ({ children }) => 
     await getSigner(true, true)
   }
 
+  async function disconnect() {
+    if (!ethProvider) {
+      throw new Error('addNetwork detectEthereumProvider = null')
+    }
+    await ethProvider.request({
+      method: 'wallet_revokePermissions',
+      params: [
+        {
+          eth_accounts: {},
+        },
+      ],
+    })
+  }
+
   async function switchNetwork(network: number = ConfiguredNetwork) {
     console.log(`Switching network: ${network}`)
     await getSigner(true, true)
@@ -227,6 +241,7 @@ export const EthereumContextProvider: FC<PropsWithChildren> = ({ children }) => 
     isHomeChain,
     explorerBaseUrl,
     connectWallet: connect,
+    disconnectWallet: disconnect,
     addNetwork,
     switchNetwork,
   }

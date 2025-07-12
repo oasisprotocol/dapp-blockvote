@@ -112,3 +112,7 @@ h3 {
     text-wrap: nowrap;
   }
 }
+
+.bg-background {
+  background-color:var(--white)
+}
