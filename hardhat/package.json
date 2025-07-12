@@ -38,7 +38,7 @@
     "@noble/hashes": "1.3.2",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@oasisprotocol/blockvote-contracts": "workspace:^",
-    "@oasisprotocol/sapphire-contracts": "^0.2.11",
+    "@oasisprotocol/sapphire-contracts": "^0.2.14",
     "@oasisprotocol/sapphire-hardhat": "^2.19.4",
     "@oasisprotocol/sapphire-paratime": "^2.0.0",
     "@typechain/ethers-v6": "^0.5.1",
