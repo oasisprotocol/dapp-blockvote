@@ -13,6 +13,11 @@ build-production: node_modules
 	$(MAKE) -C contracts build
 	$(MAKE) -C frontend build-production
 
+build-production-lido: node_modules
+	$(MAKE) -C hardhat build
+	$(MAKE) -C contracts build
+	$(MAKE) -C frontend build-production-lido
+
 clean:
 	$(MAKE) -C hardhat $@
 	$(MAKE) -C contracts $@
