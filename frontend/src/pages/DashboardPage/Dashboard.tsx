@@ -114,13 +114,13 @@ export const Dashboard: FC = () => {
     </Layout>
   ) : (
     <Layout variation="dashboard" extraWidget={createButton}>
-      <div className={classes.dashboardMain}>
-        <div className={classes.dashboardMyColumn}>
+      <div className="flex flex-1 justify-center w-full gap-8">
+        <div className="flex flex-grow w-[60%] flex-col gap-[16px]">
           <InputFieldGroup fields={[leftFilterInputs]} />
           <div className={classes.dashboardLabel}>Polls created by me</div>
           {isLoadingPolls ? <LoadingIndicator /> : myPollsColumn}
         </div>
-        <div className={classes.dashboardOtherColumn}>
+        <div className="flex flex-grow w-[30%] flex-col gap-[16px]">
           <InputFieldGroup fields={[rightFilterInputs]} alignRight />
           <div className={classes.dashboardLabel}>Explore polls</div>
           {isLoadingPolls ? <LoadingIndicator /> : explorePollsColumn}
