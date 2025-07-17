@@ -55,6 +55,8 @@ export const faucetUrl = configuredChain.faucets?.[0]
 
 // const VITE_REACT_APP_BUILD_DATETIME = Number(ENV_VITE_REACT_APP_BUILD_DATETIME) ?? 0
 
+export const mainAppUrl = 'https://vote.oasis.io'
+
 export {
   VITE_NETWORK_BIGINT,
   VITE_NETWORK_NUMBER,
