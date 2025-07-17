@@ -43,3 +43,6 @@ clean:
 
 veryclean: clean
 	rm -rf node_modules
+
+deploy-pontusx: build-production-pontusx
+	./node_modules/.bin/netlify deploy --no-build --dir=frontend/dist --prod
