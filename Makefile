@@ -18,6 +18,11 @@ build-production-lido: node_modules
 	$(MAKE) -C contracts build
 	$(MAKE) -C frontend build-production-lido
 
+build-production-pontusx: node_modules
+	$(MAKE) -C hardhat build
+	$(MAKE) -C contracts build
+	$(MAKE) -C frontend build-production-pontusx
+
 clean:
 	$(MAKE) -C hardhat $@
 	$(MAKE) -C contracts $@
