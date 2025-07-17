@@ -26,8 +26,8 @@ deploy-mainnet:
 
 .PHONY: deploy-pontusx-testnet
 deploy-pontusx-testnet:
-	$(NPM) hardhat --network pontusx-testnet deploy --viteenv ../frontend/.env.pontusxtest
-	$(NPM) hardhat --network pontusx-testnet deploy-minime-acl --viteenv ../frontend/.env.pontusxtest
+	$(NPM) hardhat --network pontusx-testnet deploy --viteenv ../frontend/.env.production.pontusx
+	$(NPM) hardhat --network pontusx-testnet deploy-minime-acl --viteenv ../frontend/.env.production.pontusx
 
 .PHONY: test
 test:
