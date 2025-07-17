@@ -35,7 +35,7 @@ build-production:
 build-production-lido:
 	$(NPM) vite build -m production.lido
 
-build-pontusx:
+build-production-pontusx:
 	$(NPM) vite build -m production.pontusx
 
 clean:
