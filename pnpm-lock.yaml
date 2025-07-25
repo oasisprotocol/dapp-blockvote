@@ -191,7 +191,7 @@ importers:
         specifier: ^5.1.1
         version: 5.3.0
       '@ethereumjs/common':
-        specifier: ^4.2.0
+        specifier: ^4.4.0
         version: 4.4.0
       '@openzeppelin/contracts':
         specifier: ^4.9.5
