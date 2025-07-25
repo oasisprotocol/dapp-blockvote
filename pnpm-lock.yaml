@@ -204,7 +204,7 @@ importers:
         specifier: ^5.0.2
         version: 5.0.2
       '@ethereumjs/trie':
-        specifier: ^6.1.1
+        specifier: ^6.2.1
         version: 6.2.1
       '@noble/hashes':
         specifier: ^1.3.3

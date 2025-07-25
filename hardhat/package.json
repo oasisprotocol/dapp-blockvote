@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@ethereumjs/rlp": "^5.0.2",
-    "@ethereumjs/trie": "^6.1.1",
+    "@ethereumjs/trie": "^6.2.1",
     "@noble/hashes": "1.3.2",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@oasisprotocol/blockvote-contracts": "workspace:^",
