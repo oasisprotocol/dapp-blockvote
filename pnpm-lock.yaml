@@ -28,7 +28,7 @@ importers:
         specifier: ^20.11.5
         version: 20.16.1
       npm-run-all2:
-        specifier: ^5.0.0
+        specifier: ^5.0.2
         version: 5.0.2
       ts-node:
         specifier: ^10.9.2
@@ -258,7 +258,7 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0(chai@4.5.0)(hardhat@2.22.9(ts-node@10.9.2(@swc/core@1.7.14)(@types/node@20.16.1)(typescript@5.6.2))(typescript@5.6.2))
       npm-run-all2:
-        specifier: ^5.0.0
+        specifier: ^5.0.2
         version: 5.0.2
       prettier:
         specifier: ^3.2.4
