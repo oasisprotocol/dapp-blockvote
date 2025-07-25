@@ -216,8 +216,8 @@ importers:
         specifier: workspace:^
         version: link:../contracts
       '@oasisprotocol/sapphire-contracts':
-        specifier: ^0.2.11
-        version: 0.2.11
+        specifier: ^0.2.14
+        version: 0.2.14
       '@oasisprotocol/sapphire-hardhat':
         specifier: ^2.19.4
         version: 2.19.4(hardhat@2.22.9(ts-node@10.9.2(@swc/core@1.7.14)(@types/node@20.16.1)(typescript@5.6.2))(typescript@5.6.2))
@@ -1472,8 +1472,8 @@ packages:
   '@oasisprotocol/deoxysii@0.0.6':
     resolution: {integrity: sha512-TI51bIpChfsla9aRbjip6zvTbz6rpsqKgM7MqJvSfeFF6G5xLXQcbSC9u/1hOnOOazd7HaqA9NvaXQdeKCb3yw==}
 
-  '@oasisprotocol/sapphire-contracts@0.2.11':
-    resolution: {integrity: sha512-SS6xxiuE/O4uiWd+cIINhZimpdSdKQDHvc8fof5L6jSIinoPfIefYp+c2W+xuY2RM1CoaYO/OT0bP9/RLatcMA==}
+  '@oasisprotocol/sapphire-contracts@0.2.14':
+    resolution: {integrity: sha512-FYdJnHsnIBBME1Ggxc3pC1+NBa9HCaI/x4pDxSF2yBYbWvcFsd9M5+TJqP1BlZq6Z4D08v1+ahIcTzKF4YaGiw==}
 
   '@oasisprotocol/sapphire-ethers-v6@6.0.1':
     resolution: {integrity: sha512-JY1pKPByoboDNSQurP9Z0+QEvShK8Y9heqOjFQjhH6ZwYmiyJdhT+iJJvBtvsVzZ3SkFay0TXwQ+G5m+VBjJRA==}
@@ -7133,7 +7133,7 @@ snapshots:
 
   '@oasisprotocol/deoxysii@0.0.6': {}
 
-  '@oasisprotocol/sapphire-contracts@0.2.11':
+  '@oasisprotocol/sapphire-contracts@0.2.14':
     dependencies:
       '@openzeppelin/contracts': 5.0.2
 
