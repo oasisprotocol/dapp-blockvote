@@ -24,7 +24,7 @@
     "@oasisprotocol/blockvote-contracts": "workspace:^",
     "@oasisprotocol/deoxysii": "^0.0.6",
     "@oasisprotocol/sapphire-ethers-v6": "^6.0.1",
-    "@oasisprotocol/sapphire-paratime": "^2.0.1",
+    "@oasisprotocol/sapphire-paratime": "^2.2.0",
     "@phosphor-icons/core": "^2.1.1",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-tabs": "^1.1.1",
