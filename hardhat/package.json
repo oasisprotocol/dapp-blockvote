@@ -40,7 +40,7 @@
     "@oasisprotocol/blockvote-contracts": "workspace:^",
     "@oasisprotocol/sapphire-contracts": "^0.2.14",
     "@oasisprotocol/sapphire-hardhat": "^2.19.4",
-    "@oasisprotocol/sapphire-paratime": "^2.0.0",
+    "@oasisprotocol/sapphire-paratime": "^2.2.0",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.11",
