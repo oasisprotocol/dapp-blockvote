@@ -51,7 +51,7 @@ contract GaslessVoting is IERC165, IGaslessVoter
     /// Lookup a poll and keypair from the address
     mapping(address => KeypairIndex) private s_addrToKeypair;
 
-    bytes32 immutable private encryptionSecret;
+    bytes32 private encryptionSecret;
 
     // ------------------------------------------------------------------------
 
